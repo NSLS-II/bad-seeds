@@ -1,0 +1,8 @@
+gym
+jupyter
+keras
+matplotlib
+numpy
+tensorboard
+tensorflow
+tensorforce
