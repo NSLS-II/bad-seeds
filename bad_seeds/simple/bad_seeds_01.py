@@ -62,7 +62,6 @@ class BadSeeds01(Environment):
         return self.max_episode_length
 
     def reset(self):
-        print("reset!")
         self.bad_seeds = [
             partial(self.rng.normal, loc=0.0, scale=10.0)
             for _ in range(self.bad_seed_count)
