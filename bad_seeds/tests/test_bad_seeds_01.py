@@ -35,7 +35,6 @@ def test_play_the_game():
     a_good_seed_ndx = bad_seeds_01_env.good_seed_indices[0]
 
     next_state, terminal, reward = bad_seeds_01_env.execute(actions=a_good_seed_ndx)
-    assert next_state[0, 0] == 0.0
     assert next_state[0, a_good_seed_ndx] != 0.0
     assert terminal is False
     assert reward == 0.0
@@ -48,10 +47,9 @@ def test_play_the_game():
     assert measured_seed_counts == 1
 
     next_state, terminal, reward = bad_seeds_01_env.execute(actions=a_good_seed_ndx)
-    assert next_state[1, 0] == 0.0
     assert next_state[1, a_good_seed_ndx] != 0.0
     assert terminal is True
-    assert reward == 1.0
+    assert reward == 0.0
 
     measurement_counts, measured_seed_counts = count_measurements(bad_seeds_01_env.state)
     print(measurement_counts)
