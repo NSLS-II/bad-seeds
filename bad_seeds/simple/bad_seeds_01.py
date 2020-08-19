@@ -17,13 +17,26 @@ def count_measurements(time_steps_by_seeds_state):
 
 
 class BadSeeds01(Environment):
-    def __init__(self, seed_count, bad_seed_count, max_episode_timesteps):
+    def __init__(self, seed_count, bad_seed_count, max_episode_length):
+        """
+        I have not been able to get this to work using the standard
+        max_episode_timesteps. I want to use that information in
+        the states() method but it is not available at that point
+        if I try
+        Environment.create(
+            environment=BadSeeds01,
+            seed_count=10,
+            bad_seed_count=3,
+            max_episode_timesteps=100
+        )
+        """
+        super().__init__()
         if bad_seed_count > seed_count:
             raise ValueError("bad_seed_count must be less than or equal to seed_count")
 
         self.seed_count = seed_count
         self.bad_seed_count = bad_seed_count
-        self._max_episode_timesteps = max_episode_timesteps
+        self.max_episode_length = max_episode_length
 
         self.rng = np.random.default_rng()
 
@@ -39,13 +52,17 @@ class BadSeeds01(Environment):
 
     def states(self):
         return dict(
-            type="float", shape=(self._max_episode_timesteps, len(self.all_seeds))
+            type="float", shape=(self.max_episode_timesteps(), len(self.all_seeds))
         )
 
     def actions(self):
         return dict(type="int", num_values=len(self.all_seeds))
 
+    def max_episode_timesteps(self):
+        return self.max_episode_length
+
     def reset(self):
+        print("reset!")
         self.bad_seeds = [
             partial(self.rng.normal, loc=0.0, scale=10.0)
             for _ in range(self.bad_seed_count)
@@ -68,7 +85,7 @@ class BadSeeds01(Environment):
         self.turn = 0
 
         # max_turns x N
-        self.state = np.zeros((self._max_episode_timesteps, len(self.all_seeds)))
+        self.state = np.zeros((self.max_episode_timesteps(), len(self.all_seeds)))
         return self.state
 
     def execute(self, actions):
@@ -82,7 +99,7 @@ class BadSeeds01(Environment):
         self.state[self.turn, seed_index] = seed_measurement
         next_state = self.state
 
-        if self.turn < (self._max_episode_timesteps - 1):
+        if self.turn < (self.max_episode_timesteps() - 1):
             terminal = False
             reward = 0.0
         else:

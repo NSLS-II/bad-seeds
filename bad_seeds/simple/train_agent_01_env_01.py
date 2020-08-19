@@ -8,7 +8,7 @@ from bad_seeds.simple.bad_seeds_01 import BadSeeds01
 def main():
 
     bad_seeds_environment = Environment.create(
-        environment=BadSeeds01, max_episode_timesteps=100,
+        environment=BadSeeds01, seed_count=10, bad_seed_count=3, max_episode_length=100
     )
 
     agent = Agent.create(
