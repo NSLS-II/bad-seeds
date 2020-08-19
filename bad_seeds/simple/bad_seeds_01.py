@@ -87,10 +87,13 @@ class BadSeeds01(Environment):
             reward = 0.0
         else:
             terminal = True
-            _measurement_counts, _measured_seed_count = count_measurements(
+            measurement_counts, measured_seed_count = count_measurements(
                 time_steps_by_seeds_state=self.state
             )
-            reward = 1.0 * _measured_seed_count
+
+            measured_bad_seed_count = np.sum(measurement_counts[0, self.bad_seed_indices])
+
+            reward = 1.0 * measured_bad_seed_count
 
         self.turn += 1
 
