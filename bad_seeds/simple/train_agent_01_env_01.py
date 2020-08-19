@@ -29,7 +29,7 @@ def main():
     )
 
     runner = Runner(agent=agent, environment=bad_seeds_environment)
-    runner.run(num_episodes=100000)
+    runner.run(num_episodes=10)
     agent.save(directory="saved_models")
 
 
