@@ -4,9 +4,9 @@ import numpy as np
 from tensorforce.environments import Environment
 
 
-def measurement_counts(time_steps_by_seeds_state):
+def count_measurements(time_steps_by_seeds_state):
     measurement_indices = np.zeros_like(time_steps_by_seeds_state)
-    measurement_indices[time_steps_by_seeds_state > 0.0] = 1.0
+    measurement_indices[time_steps_by_seeds_state != 0.0] = 1.0
     _measurement_counts = np.sum(measurement_indices, axis=0, keepdims=True)
 
     _measured_seed_count = np.sum(
@@ -87,7 +87,7 @@ class BadSeeds01(Environment):
             reward = 0.0
         else:
             terminal = True
-            _measurement_counts, _measured_seed_count = measurement_counts(
+            _measurement_counts, _measured_seed_count = count_measurements(
                 time_steps_by_seeds_state=self.state
             )
             reward = 1.0 * _measured_seed_count
@@ -100,7 +100,7 @@ class BadSeeds01(Environment):
 def test():
     state = np.array([[0, 2, 0], [0, 0, 0], [7, 8, 0],])
     print(f"test state:\n{state}")
-    _measurement_counts, _measured_seed_count = measurement_counts(
+    _measurement_counts, _measured_seed_count = count_measurements(
         time_steps_by_seeds_state=state
     )
     print(f"test measurement_counts: {_measurement_counts}")
