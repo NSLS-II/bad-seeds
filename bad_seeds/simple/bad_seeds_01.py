@@ -100,17 +100,5 @@ class BadSeeds01(Environment):
         return next_state, terminal, reward
 
 
-def test():
-    state = np.array([[0, 2, 0], [0, 0, 0], [7, 8, 0],])
-    print(f"test state:\n{state}")
-    _measurement_counts, _measured_seed_count = count_measurements(
-        time_steps_by_seeds_state=state
-    )
-    print(f"test measurement_counts: {_measurement_counts}")
-    print(f"test measured_seed_count: {_measured_seed_count}")
-    assert np.all(_measurement_counts == np.array([1, 2, 0]))
-    assert _measured_seed_count == 2
-
-
 if __name__ == "__main__":
-    test()
+    print("nothing to see here")
