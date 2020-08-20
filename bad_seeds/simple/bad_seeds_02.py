@@ -130,11 +130,11 @@ class BadSeeds02(Environment):
 
     @staticmethod
     def update_mean(prev_mean, prev_count, new_measurement):
-        return (prev_mean*prev_count+new_measurement)/(prev_count+1)
+        return (prev_mean * prev_count + new_measurement) / (prev_count + 1)
 
     @staticmethod
     def update_var(prev_var, prev_mean, prev_count, new_measurement):
-        return prev_count/(prev_count+1) * (prev_var + (new_measurement-prev_mean)**2/(prev_count+1))
+        return prev_count / (prev_count + 1) * (prev_var + (new_measurement - prev_mean) ** 2 / (prev_count + 1))
 
     def execute(self, actions):
         """
@@ -159,11 +159,13 @@ class BadSeeds02(Environment):
         seed_measurement = self.all_seeds[seed_index]()
         prev_count = self.state[seed_index, count_index]
         prev_mean = self.state[seed_index, mean_index]
-        self.state[seed_index, mean_index] = self.update_mean(prev_mean, prev_count, seed_measurement)
-        self.state[seed_index, var_index] = self.update_var(self.state[seed_index, var_index],
-                                                            prev_mean,
-                                                            prev_count,
-                                                            seed_measurement)
+        self.state[seed_index, mean_index] = self.update_mean(prev_mean=prev_mean,
+                                                              prev_count=prev_count,
+                                                              new_measurement=seed_measurement)
+        self.state[seed_index, var_index] = self.update_var(prev_var=self.state[seed_index, var_index],
+                                                            prev_mean=prev_mean,
+                                                            prev_count=prev_count,
+                                                            new_measurement=seed_measurement)
         self.state[seed_index, count_index] += 1
 
         self.full_exp[seed_index].append(seed_measurement)
@@ -174,7 +176,7 @@ class BadSeeds02(Environment):
             terminal = False
 
         if seed_index in self.history:
-            reward = -1*self.bad_seed_reward
+            reward = -1 * self.bad_seed_reward
         elif seed_index in self.bad_seed_indices:
             reward = self.bad_seed_reward
         elif seed_index in self.good_seed_indices:
@@ -184,7 +186,6 @@ class BadSeeds02(Environment):
 
         self.history.append(seed_index)
         return self.state, terminal, reward
-
 
 
 if __name__ == "__main__":
