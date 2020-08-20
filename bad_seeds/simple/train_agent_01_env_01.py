@@ -7,6 +7,7 @@ from bad_seeds.simple.bad_seeds_01 import BadSeeds01
 
 def main():
 
+    # maximum reward is approximately max_episode_length / seed_count = 10
     bad_seeds_environment = Environment.create(
         environment=BadSeeds01, seed_count=10, bad_seed_count=3, max_episode_length=100
     )
