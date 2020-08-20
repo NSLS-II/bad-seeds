@@ -7,8 +7,11 @@ from tensorforce.environments import Environment
 def count_measurements(time_steps_by_seeds_state):
     measurement_indices = np.zeros_like(time_steps_by_seeds_state)
     measurement_indices[time_steps_by_seeds_state != 0.0] = 1.0
+
+    # how many measurements were made on each seed
     _measurement_counts = np.sum(measurement_indices, axis=0, keepdims=True)
 
+    # how many seeds were measured over the whole episode
     _measured_seed_count = np.sum(
         np.ones_like(_measurement_counts)[_measurement_counts > 0.0]
     )
@@ -83,15 +86,16 @@ class BadSeeds01(Environment):
 
         self.turn = 0
 
-        # max_turns x N
+        # max_turns x seed_count
         self.state = np.zeros((self.max_episode_timesteps(), len(self.all_seeds)))
         return self.state
 
     def execute(self, actions):
         """
         No reward until the end of the episode.
-        One point for each seed measured over the whole episode.
-        Maximum score is len(self.all_seeds)
+        No reward unless all seeds are measured.
+        Reward is the number of measurements made on the least-measured seed.
+        Maximum score is approximately max_episode_timesteps() / seed_count.
         """
         seed_index = actions
         seed_measurement = self.all_seeds[seed_index](size=1)
@@ -106,10 +110,12 @@ class BadSeeds01(Environment):
             measurement_counts, measured_seed_count = count_measurements(
                 time_steps_by_seeds_state=self.state
             )
-
-            measured_bad_seed_count = np.sum(measurement_counts[0, self.bad_seed_indices])
-
-            reward = 1.0 * measured_bad_seed_count
+            # were all seeds measured?
+            if np.sum(measured_seed_count) < len(self.all_seeds):
+                reward = 0.0
+            else:
+                least_measured_seed_count = np.min(measurement_counts)
+                reward = least_measured_seed_count
 
         self.turn += 1
 
