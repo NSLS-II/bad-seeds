@@ -65,6 +65,7 @@ class BadSeeds02(Environment):
         self.state = None
         self.state_shape = (self.seed_count, 3)
         # self.reset()
+        self.full_exp = [[] for _ in range(seed_count)]
 
     def states(self):
         """
@@ -123,6 +124,7 @@ class BadSeeds02(Environment):
         for i, seed in enumerate(self.all_seeds):
             measurements = seed(size=2)
             self.state[i, :] = [np.mean(measurements), np.var(measurements), 2]
+            self.full_exp[i].extend(measurements)
 
         return self.state
 
@@ -160,9 +162,11 @@ class BadSeeds02(Environment):
         self.state[seed_index, mean_index] = self.update_mean(prev_mean, prev_count, seed_measurement)
         self.state[seed_index, var_index] = self.update_var(self.state[seed_index, var_index],
                                                             prev_mean,
-                                                            self.state[seed_index, mean_index],
+                                                            prev_count,
                                                             seed_measurement)
         self.state[seed_index, count_index] += 1
+
+        self.full_exp[seed_index].append(seed_measurement)
 
         if self.timestep >= self.max_episode_timesteps():
             terminal = True
