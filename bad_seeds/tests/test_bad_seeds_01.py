@@ -80,7 +80,7 @@ def test_play_the_game_badly():
 
 def test_play_the_game_less_badly():
     bad_seeds_01_env = BadSeeds01(
-        seed_count=5, bad_seed_count=3, max_episode_length=2*2 + 3*3 + 1
+        seed_count=5, bad_seed_count=3, max_episode_length=2 * 2 + 3 * 3 + 1
     )
 
     # measure the good seeds twice

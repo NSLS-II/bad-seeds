@@ -18,7 +18,9 @@ def test_initialization():
     assert len(bad_seeds_03_env.bad_seeds) == 3
     assert len(bad_seeds_03_env.good_seeds) == 7
 
-    measurement_count_per_seed, measurement_count = count_measurements(bad_seeds_03_env.history_array)
+    measurement_count_per_seed, measurement_count = count_measurements(
+        bad_seeds_03_env.history_array
+    )
     assert np.all(measurement_count_per_seed == 3 * np.ones((1, 10)))
     # all seeds have been measured
     assert measurement_count == 10
@@ -32,12 +34,12 @@ def test_bad_initialization():
 def test_count_measurements():
     history = np.array(
         [
-            [0.0,  0.5,  0.0, 0.0],
-            [0.0,  0.0, -0.5, 0.0],
-            [0.5,  0.0,  0.0, 0.0],
-            [0.0, -0.5,  0.0, 0.0],
-            [0.0,  0.0,  0.5, 0.0],
-            [0.0,  0.5,  0.0, 0.0],
+            [0.0, 0.5, 0.0, 0.0],
+            [0.0, 0.0, -0.5, 0.0],
+            [0.5, 0.0, 0.0, 0.0],
+            [0.0, -0.5, 0.0, 0.0],
+            [0.0, 0.0, 0.5, 0.0],
+            [0.0, 0.5, 0.0, 0.0],
         ]
     )
 
@@ -49,23 +51,27 @@ def test_count_measurements():
 
 
 def test_play_the_game_badly():
-    bad_seeds_03_env = BadSeeds03(seed_count=5, bad_seed_count=3, max_episode_length=3+5)
+    bad_seeds_03_env = BadSeeds03(
+        seed_count=5, bad_seed_count=3, max_episode_length=3 + 5
+    )
 
-    measurement_counts, measured_seed_count = count_measurements(bad_seeds_03_env.history_array)
+    measurement_counts, measured_seed_count = count_measurements(
+        bad_seeds_03_env.history_array
+    )
     assert np.all(measurement_counts == np.array([3, 3, 3, 3, 3]))
     # all seeds were measured at reset()
     assert measured_seed_count == 5
 
-    #print(f"history before start:\n{bad_seeds_03_env.history}")
+    # print(f"history before start:\n{bad_seeds_03_env.history}")
     # measure all seeds but the last seed
     for time_i, seed_i in enumerate(range(len(bad_seeds_03_env.all_seeds) - 1)):
         time_i += 3
 
-        #print(f"time_i: {time_i}")
-        #print(f"turn before execute: {bad_seeds_03_env.turn}")
+        # print(f"time_i: {time_i}")
+        # print(f"turn before execute: {bad_seeds_03_env.turn}")
         next_state, terminal, reward = bad_seeds_03_env.execute(actions=seed_i)
-        #print(f"turn after execute: {bad_seeds_03_env.turn}")
-        #print(f"history:\n{bad_seeds_03_env.history}")
+        # print(f"turn after execute: {bad_seeds_03_env.turn}")
+        # print(f"history:\n{bad_seeds_03_env.history}")
         assert bad_seeds_03_env.history_array[time_i, seed_i] != 0.0
         assert terminal is False
         assert reward == 0.0
@@ -79,8 +85,8 @@ def test_play_the_game_badly():
             bad_seeds_03_env.history_array
         )
         for seed_j in range(seed_i):
-            #print(seed_j)
-            #print(measurement_counts)
+            # print(seed_j)
+            # print(measurement_counts)
             assert measurement_counts[0, seed_j] == 4
         assert measured_seed_counts == len(bad_seeds_03_env.all_seeds)
 
@@ -88,8 +94,8 @@ def test_play_the_game_badly():
     # no reward because the last seed is never measured
     next_state, terminal, reward = bad_seeds_03_env.execute(actions=4)
 
-    #print(f"bad_seed_measured_counts: {bad_seed_measured_counts}")
-    #print(f"least_measured_bad_seed_count: {least_measured_bad_seed_count}")
+    # print(f"bad_seed_measured_counts: {bad_seed_measured_counts}")
+    # print(f"least_measured_bad_seed_count: {least_measured_bad_seed_count}")
 
     assert next_state[len(bad_seeds_03_env.all_seeds) - 1, 0] != 0.0
     assert terminal is True
@@ -104,7 +110,7 @@ def test_play_the_game_badly():
 
 def test_play_the_game_less_badly():
     bad_seeds_03_env = BadSeeds03(
-        seed_count=5, bad_seed_count=3, max_episode_length=3 + 2*2 + 3*3 + 1
+        seed_count=5, bad_seed_count=3, max_episode_length=3 + 2 * 2 + 3 * 3 + 1
     )
 
     # measure the good seeds twice
