@@ -219,7 +219,6 @@ class BadSeeds02(Environment):
             # entropy_reward = self.entropy_scaling * (current_entropy - prev_entropy > 0)
             # An alternative to the bool reward of increased entropy is to scale the percent change
             entropy_reward = self.entropy_scaling * (current_entropy - prev_entropy)/prev_entropy
-            print(entropy_reward)
             reward += entropy_reward
 
         # Update history queue and update state
