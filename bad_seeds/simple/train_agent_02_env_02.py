@@ -26,20 +26,23 @@ def tensorflow_settings():
 def set_up():
     tensorflow_settings()
     bad_seeds_environment = Environment.create(
-        environment=BadSeeds02, seed_count=10, bad_seed_count=3, max_episode_timesteps=300,
+        environment=BadSeeds02, seed_count=10, bad_seed_count=3, history_block=2, max_episode_timesteps=1000,
     )
-
 
     agent = Agent.create(
         agent="dqn",
+        network=[
+            dict(type='flatten'),
+            dict(type='dense', size=32, activation='tanh'),
+            dict(type='dense', size=32, activation='tanh')],
         environment=bad_seeds_environment,
         batch_size=64,
-        memory=int(10**5),
-        exploration=0.1,
+        memory=int(10 ** 5),
+        exploration=0.25,
         summarizer=dict(
             directory="training_data/agent_02_env_02/summaries",
             labels="all",
-            frequency=100 # store values every 100 timesteps
+            frequency=100  # store values every 100 timesteps
         )
     )
 
@@ -49,7 +52,7 @@ def set_up():
 def main():
     bad_seeds_environment, agent = set_up()
     runner = Runner(agent=agent, environment=bad_seeds_environment)
-    runner.run(num_episodes=300)
+    runner.run(num_episodes=1000)
     agent.save(directory="saved_models")
 
 
