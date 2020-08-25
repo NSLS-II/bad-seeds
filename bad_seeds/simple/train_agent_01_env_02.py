@@ -26,7 +26,7 @@ def tensorflow_settings():
 def set_up():
     tensorflow_settings()
     bad_seeds_environment = Environment.create(
-        environment=BadSeeds02, seed_count=10, bad_seed_count=3, max_episode_timesteps=100
+        environment=BadSeeds02, seed_count=10, bad_seed_count=3, history_block=2, max_episode_timesteps=100
     )
 
     agent = Agent.create(
@@ -52,7 +52,7 @@ def set_up():
 def main():
     bad_seeds_environment, agent = set_up()
     runner = Runner(agent=agent, environment=bad_seeds_environment)
-    runner.run(num_episodes=100)
+    runner.run(num_episodes=300)
     agent.save(directory="saved_models")
 
 
@@ -66,8 +66,9 @@ def manual_main():
         while not terminal:
             actions = agent.act(states=states)
             states, terminal, reward = bad_seeds_environment.execute(actions=actions)
+            print(reward)
             agent.observe(terminal=terminal, reward=reward)
 
 
 if __name__ == "__main__":
-    main()
+    manual_main()
