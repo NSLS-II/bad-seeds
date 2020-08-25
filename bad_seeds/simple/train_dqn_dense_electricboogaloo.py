@@ -26,7 +26,7 @@ def tensorflow_settings():
 def set_up():
     tensorflow_settings()
     bad_seeds_environment = Environment.create(
-        environment=BadSeeds02, seed_count=10, bad_seed_count=3, history_block=2, max_episode_timesteps=1000,
+        environment=BadSeeds02, seed_count=10, bad_seed_count=3, history_block=2, max_episode_timesteps=500,
     )
 
     agent = Agent.create(
@@ -36,9 +36,9 @@ def set_up():
             dict(type='dense', size=32, activation='tanh'),
             dict(type='dense', size=32, activation='tanh')],
         environment=bad_seeds_environment,
-        batch_size=64,
-        memory=int(10 ** 5),
-        exploration=0.25,
+        batch_size=256,
+        memory=int(10 ** 7),
+        exploration=0.15,
         summarizer=dict(
             directory="training_data/agent_02_env_02/summaries",
             labels="all",
