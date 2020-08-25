@@ -26,7 +26,7 @@ def set_up():
     tensorflow_settings()
     env = Environment.create(
         environment=CartSeed01,
-        seed_count=2,
+        seed_count=10,
         bad_seed_count=3,
         max_count=20
     )
