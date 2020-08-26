@@ -4,7 +4,7 @@ from tensorforce.execution import Runner
 from bad_seeds.simple.bad_seeds_cart import CartSeed01
 
 
-def tensorflow_settings():
+def tensorflow_settings(gpu_idx):
     import tensorflow as tf
     import os
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -12,7 +12,7 @@ def tensorflow_settings():
     if gpus:
         # Restrict TensorFlow to only use the last GPU, and dynamically grow memory use
         try:
-            tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
+            tf.config.experimental.set_visible_devices(gpus[gpu_idx], 'GPU')
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
             logical_gpus = tf.config.experimental.list_logical_devices('GPU')
@@ -22,8 +22,8 @@ def tensorflow_settings():
             print(e)
 
 
-def set_up():
-    tensorflow_settings()
+def set_up(gpu_idx=0):
+    tensorflow_settings(gpu_idx)
     env = Environment.create(
         environment=CartSeed01,
         seed_count=10,
@@ -55,10 +55,67 @@ def set_up():
     return env, agent
 
 
+def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0):
+    """
+    What happens when our friendly agent has a time constraint.
+    Parameters
+    ----------
+    timelimit: int, max_episode_timesteps
+    scoring: key for function dict
+
+    Returns
+    -------
+    env
+    agent
+    """
+
+    def tt2(state, *args):
+        if state[1] > 5:
+            return 2
+        else:
+            return 1
+
+    def tt5(state, *args):
+        if state[1] > 5:
+            return 5
+        else:
+            return 2
+
+    def monotonic(state, *args):
+        return float(state[1] > 5) * state[1]
+
+    func_dict = dict(tt2=tt2,
+                     tt5=tt5,
+                     monotonic=monotonic)
+
+
+    tensorflow_settings(gpu_idx)
+    env = Environment.create(
+        environment=CartSeed01,
+        seed_count=10,
+        bad_seed_count=None,
+        max_count=10,
+        sequential=True,
+        bad_seed_reward_f=func_dict.get(scoring, None),
+        max_episode_timesteps=timelimit
+    )
+    agent = Agent.create(
+        agent="a2c",
+        batch_size=16,
+        environment=env,
+        summarizer=dict(
+            directory="training_data/a2c_cartseed/summaries",
+            labels="all",
+            frequency=1,
+        ),
+    )
+
+    return env, agent
+
 def main():
-    env, agent = set_up()
+    env, agent = set_up_rushed(50, 'tt2', 0)
     runner = Runner(agent=agent, environment=env)
-    runner.run(num_episodes=int(3*10**3))
+    runner.run(num_episodes=int(3 * 10 ** 3))
     agent.save(directory="saved_models")
     agent.close()
     env.close()
