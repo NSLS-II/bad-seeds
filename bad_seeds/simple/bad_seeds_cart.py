@@ -5,7 +5,8 @@ from tensorforce.environments import Environment
 
 class CartSeed01(Environment):
 
-    def __init__(self, seed_count, *, bad_seed_count=None, max_count=10, frozen_order=False, revisiting=True):
+    def __init__(self, seed_count, *, bad_seed_count=None, max_count=10, frozen_order=False, sequential=False,
+                 revisiting=True):
         """
         Bad seeds, but make it cartpole...
 
@@ -27,6 +28,9 @@ class CartSeed01(Environment):
             Maximum number of samples/scans needed to saturate a bad_seed
         frozen_order: bool
             For debugging or an easier game. This locks the order of the seeds and order of the sampling.
+            Bad seeds are the first set of seeds.
+        sequential: bool
+            Visit the samples in sequential order, not randomly.
         revisiting: bool
             Whether to allow revisiting of past samples. Once all samples are visited, the memory resets.
             The memory is a hashable set that gets emptied when its length reaches the seed count.
@@ -47,6 +51,7 @@ class CartSeed01(Environment):
         self.good_seed_reward = 0
         self.max_count = max_count
         self.frozen_order = bool(frozen_order)
+        self.sequential_order = bool(sequential)
         self.revisiting = bool(revisiting)
         self.visited = set()
         self.timestep = 0
@@ -112,8 +117,6 @@ class CartSeed01(Environment):
         self.seeds[self.good_seed_indicies, :] = [0, 0]
 
         self.current_idx = self.rng.integers(self.seed_count)
-        if not self.revisiting:
-            self.visited.add(self.current_idx)
         self.exp_sequence.append(self.current_idx)
         state = self.seeds[self.current_idx, :]
         return state
@@ -139,20 +142,26 @@ class CartSeed01(Environment):
         move = bool(actions)
         prev_index = self.current_idx
         if move:
-            # Clear previously visited
+            # Clear previously visited or complete episode if all samples visited
             if len(self.visited) == self.seed_count:
-                self.visited = set()
-            # Frozen order iterates
-            if self.frozen_order:
+                if not self.revisiting:
+                    state = self.seeds[prev_index, :]
+                    terminal = True
+                    reward = self.good_seed_reward
+                    return state, terminal, reward
+                else:
+                    self.visited = set()
+            # Frozen order  and sequential order iterates
+            if self.frozen_order or self.sequential_order:
                 self.current_idx = (self.current_idx + 1) % self.seed_count
             # Otherwise random change that hasn't been visited
             else:
                 self.current_idx = self.rng.integers(self.seed_count)
                 while self.current_idx in self.visited or self.current_idx == prev_index:
                     self.current_idx = self.rng.integers(self.seed_count)
-            # Add to memory
-            if not self.revisiting:
-                self.visited.add(self.current_idx)
+        # Add to memory
+        if not self.revisiting:
+            self.visited.add(self.current_idx)
 
         self.exp_sequence.append(self.current_idx)
         state = self.seeds[self.current_idx, :]
@@ -174,18 +183,13 @@ class CartSeed01(Environment):
 
 if __name__ == "__main__":
     np.set_printoptions(precision=3)
-    env = Environment.create(environment=CartSeed01, seed_count=10, bad_seed_count=None)
+    env = Environment.create(environment=CartSeed01, seed_count=3, bad_seed_count=1, sequential=True, revisiting=False)
     state = env.reset()
     print(f'Start state: {state}')
     print(f"Environmental snaphot:\n {env.seeds}")
     print(f"Number of bad seeds: {env.bad_seed_count}")
-    if bool(state[0]):
-        a = 0
-    else:
-        a = 1
-    s, t, r = env.execute(a)
-    print(f'New seed state: {s}. New seed reward: {r}. Terminal: {t}')
-    a = True
-    s, t, r = env.execute(a)
-    print(f'New seed state: {s}. New seed reward: {r}. Terminal: {t}')
+    for _ in range(4):
+        a = True
+        s, t, r = env.execute(a)
+        print(f'New seed state: {s}. New seed reward: {r}. Terminal: {t}')
     print(f"Max timesteps {env.max_episode_timesteps()}")
