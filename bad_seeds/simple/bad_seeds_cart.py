@@ -5,7 +5,7 @@ from tensorforce.environments import Environment
 
 class CartSeed01(Environment):
 
-    def __init__(self, seed_count, bad_seed_count, *, max_count=10, frozen_order=False, revisiting=True):
+    def __init__(self, seed_count, *, bad_seed_count=None, max_count=10, frozen_order=False, revisiting=True):
         """
         Bad seeds, but make it cartpole...
 
@@ -22,7 +22,7 @@ class CartSeed01(Environment):
         seed_count: int
             Number of total seeds
         bad_seed_count: int
-            Number of bad seesd
+            Number of bad seeds. If None, a variable amount will be used for each reset.
         max_count: int
             Maximum number of samples/scans needed to saturate a bad_seed
         frozen_order: bool
@@ -34,10 +34,15 @@ class CartSeed01(Environment):
         """
         super().__init__()
 
-        if bad_seed_count > seed_count:
+        if bad_seed_count is None:
+            self.variable_bad_seed = True
+            self.bad_seed_count = 0
+        elif bad_seed_count > seed_count:
             raise ValueError("bad_seed_count must be less than or equal to seed_count")
+        else:
+            self.bad_seed_count = bad_seed_count
+            self.variable_bad_seed = False
         self.seed_count = seed_count
-        self.bad_seed_count = bad_seed_count
         self.bad_seed_reward = 1
         self.good_seed_reward = 0
         self.max_count = max_count
@@ -54,7 +59,6 @@ class CartSeed01(Environment):
         self.good_seed_indicies = None
 
         self.rng = np.random.default_rng()
-
 
     def states(self):
         """
@@ -87,6 +91,7 @@ class CartSeed01(Environment):
         """
         Sets up seeds array and indicies. Plenty of redundant tracking.
         If frozen order is set, then the first 3 indicies are always bad seeds.
+        If variable bad seed, the bad seed count is randomly varied, and the max score is kept at 100.
         Returns
         -------
         State
@@ -95,6 +100,12 @@ class CartSeed01(Environment):
         l = list(range(self.seed_count))
         if not self.frozen_order:
             self.rng.shuffle(l)
+        if self.variable_bad_seed:
+            self.bad_seed_count = self.rng.integers(self.seed_count)
+            if self.bad_seed_count > 0:
+                self.bad_seed_reward = 100 / (self.bad_seed_count*self.max_count)
+            else:
+                self.bad_seed_reward = 1
         self.bad_seed_indicies = l[:self.bad_seed_count]
         self.good_seed_indicies = l[self.bad_seed_count:]
         self.seeds[self.bad_seed_indicies, :] = [1, self.max_count]
@@ -163,16 +174,18 @@ class CartSeed01(Environment):
 
 if __name__ == "__main__":
     np.set_printoptions(precision=3)
-    env = Environment.create(environment=CartSeed01, seed_count=2, bad_seed_count=1)
+    env = Environment.create(environment=CartSeed01, seed_count=10, bad_seed_count=None)
     state = env.reset()
     print(f'Start state: {state}')
     print(f"Environmental snaphot:\n {env.seeds}")
+    print(f"Number of bad seeds: {env.bad_seed_count}")
     if bool(state[0]):
         a = 0
     else:
         a = 1
     s, t, r = env.execute(a)
-    print(f'Bad seed state: {s}. Bad seed reward: {r}. Terminal: {t}')
+    print(f'New seed state: {s}. New seed reward: {r}. Terminal: {t}')
     a = True
     s, t, r = env.execute(a)
-    print(f'Good seed state: {s}. Good seed reward: {r}. Terminal: {t}')
+    print(f'New seed state: {s}. New seed reward: {r}. Terminal: {t}')
+    print(f"Max timesteps {env.max_episode_timesteps()}")
