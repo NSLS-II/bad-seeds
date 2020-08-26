@@ -6,7 +6,7 @@ from tensorforce.environments import Environment
 class CartSeed01(Environment):
 
     def __init__(self, seed_count, *, bad_seed_count=None, max_count=10, frozen_order=False, sequential=False,
-                 revisiting=True):
+                 revisiting=True, bad_seed_reward_f=None, good_seed_reward_f=None):
         """
         Bad seeds, but make it cartpole...
 
@@ -35,6 +35,10 @@ class CartSeed01(Environment):
             Whether to allow revisiting of past samples. Once all samples are visited, the memory resets.
             The memory is a hashable set that gets emptied when its length reaches the seed count.
             A possible update is to make this a terminal condition.
+        bad_seed_reward: function
+            Function of the form f(state, terminal, action). Where the state is the resultant state from the action.
+        good_seed_reward: function
+            Function of the form f(state, terminal, action). Where the state is the resultant state from the action.
         """
         super().__init__()
 
@@ -47,8 +51,15 @@ class CartSeed01(Environment):
             self.bad_seed_count = bad_seed_count
             self.variable_bad_seed = False
         self.seed_count = seed_count
-        self.bad_seed_reward = 1
-        self.good_seed_reward = 0
+        if bad_seed_reward_f is None:
+            self.bad_seed_reward_f = lambda s, t, a: 1
+        else:
+            self.bad_seed_reward_f = bad_seed_reward_f
+        if good_seed_reward_f is None:
+            self.good_seed_reward_f = lambda s, t, a: 0
+        else:
+            self.good_seed_reward_f = good_seed_reward_f
+
         self.max_count = max_count
         self.frozen_order = bool(frozen_order)
         self.sequential_order = bool(sequential)
@@ -64,6 +75,40 @@ class CartSeed01(Environment):
         self.good_seed_indicies = None
 
         self.rng = np.random.default_rng()
+
+    def bad_seed_reward(self, state, terminal, action):
+        """
+        Functional approach to the bad seed reward
+        Parameters
+        ----------
+        state: array
+            Current state
+        terminal: bool
+            Current terminal status
+        action: array
+            Action preceeding the current state
+        Returns
+        -------
+        reward
+        """
+        return self.bad_seed_reward_f(state, terminal, action)
+
+    def good_seed_reward(self, state, terminal, action):
+        """
+        Functional approach to the good seed reward
+        Parameters
+        ----------
+        state: array
+            Current state
+        terminal: bool
+            Current terminal status
+        action: array
+            Action preceeding the current state
+        Returns
+        -------
+        reward
+        """
+        return self.good_seed_reward_f(state, terminal, action)
 
     def states(self):
         """
@@ -108,9 +153,9 @@ class CartSeed01(Environment):
         if self.variable_bad_seed:
             self.bad_seed_count = self.rng.integers(self.seed_count)
             if self.bad_seed_count > 0:
-                self.bad_seed_reward = 100 / (self.bad_seed_count*self.max_count)
+                self.bad_seed_reward_f = lambda s, t, a: 100 / (self.bad_seed_count * self.max_count)
             else:
-                self.bad_seed_reward = 1
+                self.bad_seed_reward_f = lambda s, t, a: 1
         self.bad_seed_indicies = l[:self.bad_seed_count]
         self.good_seed_indicies = l[self.bad_seed_count:]
         self.seeds[self.bad_seed_indicies, :] = [1, self.max_count]
@@ -147,7 +192,7 @@ class CartSeed01(Environment):
                 if not self.revisiting:
                     state = self.seeds[prev_index, :]
                     terminal = True
-                    reward = self.good_seed_reward
+                    reward = self.good_seed_reward(state, terminal, actions)
                     return state, terminal, reward
                 else:
                     self.visited = set()
@@ -166,30 +211,42 @@ class CartSeed01(Environment):
         self.exp_sequence.append(self.current_idx)
         state = self.seeds[self.current_idx, :]
 
-        if bool(self.seeds[self.current_idx, 0]) and self.seeds[self.current_idx, 1] > 0:
-            reward = self.bad_seed_reward
-        else:
-            reward = self.good_seed_reward
-
-        self.seeds[self.current_idx, 1] -= 1
-
         if self.timestep >= self.max_episode_timesteps():
             terminal = True
         else:
             terminal = False
+
+        if bool(self.seeds[self.current_idx, 0]) and self.seeds[self.current_idx, 1] > 0:
+            reward = self.bad_seed_reward(state, terminal, actions)
+        else:
+            reward = self.good_seed_reward(state, terminal, actions)
+
+        self.seeds[self.current_idx, 1] -= 1
 
         return state, terminal, reward
 
 
 if __name__ == "__main__":
     np.set_printoptions(precision=3)
-    env = Environment.create(environment=CartSeed01, seed_count=3, bad_seed_count=1, sequential=True, revisiting=False)
+    def bad_seed_reward_f(state, *args):
+        if state[1]>5:
+            return 2
+        else:
+            return 1
+        #return float(state[1]>0) * state[1]
+    env = Environment.create(environment=CartSeed01,
+                             seed_count=3,
+                             bad_seed_count=1,
+                             sequential=True,
+                             revisiting=False,
+                             bad_seed_reward_f=bad_seed_reward_f)
     state = env.reset()
     print(f'Start state: {state}')
     print(f"Environmental snaphot:\n {env.seeds}")
     print(f"Number of bad seeds: {env.bad_seed_count}")
+    print(f"Max timesteps {env.max_episode_timesteps()}")
     for _ in range(4):
         a = True
         s, t, r = env.execute(a)
         print(f'New seed state: {s}. New seed reward: {r}. Terminal: {t}')
-    print(f"Max timesteps {env.max_episode_timesteps()}")
+
