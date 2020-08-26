@@ -27,22 +27,25 @@ def set_up():
     env = Environment.create(
         environment=CartSeed01,
         seed_count=10,
-        bad_seed_count=3,
-        max_count=20
+        bad_seed_count=None,
+        max_count=10,
+        sequential=True
     )
 
     agent = Agent.create(
         agent="a2c",
-        batch_size=10000,
-        horizon=50,
-        discount=0.97,
-        l2_regularization=0.1,
-        variable_noise=0.5,
+        batch_size=1,
+        # Best and slowest batch size is 1, larger batch size will decrease speed
+        # The following were shown effective in prelim tests and should be optimized with
+        # and appropriate hyperparameter opt scheme: discount, exploration, l2_regularization.
+        # discount=0.97,
+        # exploration=0.05,
+        # l2_regularization=0.1,
         environment=env,
         summarizer=dict(
             directory="training_data/a2c_cartseed/summaries",
             labels="all",
-            frequency=10,
+            frequency=1,
         ),
         # saver=dict(
         #     directory='saved_models/agent_04_env_04_1000/checkpoints',
@@ -55,7 +58,7 @@ def set_up():
 def main():
     env, agent = set_up()
     runner = Runner(agent=agent, environment=env)
-    runner.run(num_episodes=10000)
+    runner.run(num_episodes=int(3*10**3))
     agent.save(directory="saved_models")
     agent.close()
     env.close()
