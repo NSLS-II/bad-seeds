@@ -90,15 +90,14 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0):
 
 
     tensorflow_settings(gpu_idx)
-    env = Environment.create(
-        environment=CartSeed01,
-        seed_count=10,
-        bad_seed_count=None,
-        max_count=10,
-        sequential=True,
-        bad_seed_reward_f=func_dict.get(scoring, None),
-        max_episode_timesteps=timelimit
-    )
+    environment = CartSeed01(seed_count=10,
+                             bad_seed_count=None,
+                             max_count=10,
+                             sequential=True,
+                             revisiting=True,
+                             bad_seed_reward_f=func_dict.get(scoring, None),
+                             measurement_time=timelimit)
+    env = Environment.create(environment=environment)
     agent = Agent.create(
         agent="a2c",
         batch_size=16,
