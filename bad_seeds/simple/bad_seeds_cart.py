@@ -247,14 +247,9 @@ if __name__ == "__main__":
             return 1
         # return float(state[1]>0) * state[1]
 
-
-    env = Environment.create(environment=CartSeed01,
-                             seed_count=3,
-                             bad_seed_count=1,
-                             sequential=True,
-                             revisiting=False,
-                             bad_seed_reward_f=bad_seed_reward_f,
-                             measurement_time=50)
+    environment = CartSeed01(seed_count=3, bad_seed_count=1, sequential=True, revisiting=False,
+                             bad_seed_reward_f=bad_seed_reward_f, measurement_time=50)
+    env = Environment.create(environment=environment)
     state = env.reset()
     print(f'Start state: {state}')
     print(f"Environmental snaphot:\n {env.seeds}")
