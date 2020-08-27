@@ -55,7 +55,7 @@ def set_up(gpu_idx=0):
     return env, agent
 
 
-def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0):
+def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16):
     """
     What happens when our friendly agent has a time constraint.
     Parameters
@@ -70,24 +70,27 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0):
     """
 
     def tt2(state, *args):
-        if state[1] > 5:
+        if state[1] >= 5:
             return 2
         else:
             return 1
 
     def tt5(state, *args):
-        if state[1] > 5:
+        if state[1] >= 5:
             return 5
         else:
-            return 2
+            return 1
 
     def monotonic(state, *args):
         return float(state[1] > 5) * state[1]
 
+    def default(state, *args):
+        return 1
+
     func_dict = dict(tt2=tt2,
                      tt5=tt5,
-                     monotonic=monotonic)
-
+                     monotonic=monotonic,
+                     default=default)
 
     tensorflow_settings(gpu_idx)
     environment = CartSeed01(seed_count=10,
@@ -100,24 +103,16 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0):
     env = Environment.create(environment=environment)
     agent = Agent.create(
         agent="a2c",
-        batch_size=16,
+        batch_size=batch_size,
         environment=env,
         summarizer=dict(
-            directory="training_data/a2c_cartseed/summaries",
+            directory="training_data/a2c_cartseed/{}_{}_{}".format(timelimit, scoring, batch_size),
             labels="all",
             frequency=1,
         ),
     )
 
     return env, agent
-
-def main():
-    env, agent = set_up_rushed(50, 'tt2', 0)
-    runner = Runner(agent=agent, environment=env)
-    runner.run(num_episodes=int(3 * 10 ** 3))
-    agent.save(directory="saved_models")
-    agent.close()
-    env.close()
 
 
 def manual_main():
@@ -134,6 +129,18 @@ def manual_main():
             episode_len += 1
             agent.observe(terminal=terminal, reward=reward)
         print(f"Episode reward: {episode_reward}. Episode length {episode_len}")
+
+
+def main():
+    env, agent = set_up_rushed(timelimit=None,
+                               scoring='default',
+                               batch_size=16,
+                               gpu_idx=1,)
+    runner = Runner(agent=agent, environment=env)
+    runner.run(num_episodes=int(3 * 10 ** 3))
+    agent.save(directory="saved_models")
+    agent.close()
+    env.close()
 
 
 if __name__ == "__main__":
