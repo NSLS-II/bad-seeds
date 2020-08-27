@@ -6,7 +6,8 @@ from tensorforce.environments import Environment
 class CartSeed01(Environment):
 
     def __init__(self, seed_count, *, bad_seed_count=None, max_count=10, frozen_order=False, sequential=False,
-                 revisiting=True, bad_seed_reward_f=None, good_seed_reward_f=None, measurement_time=None):
+                 revisiting=True, bad_seed_reward_f=None, good_seed_reward_f=None,
+                 measurement_time=None):
         """
         Bad seeds, but make it cartpole...
 
@@ -18,6 +19,8 @@ class CartSeed01(Environment):
         The key assumptions of this framing are that from an initial sampling of all seeds (brief scans of all samples)
         it will be clear which are Bad and which are Good. This should be extensible to varying degrees of goodness.
 
+        Scores are default scaled to 100.
+        If a bad_seed_reward_f is given, no scaling is done unelss a point max is given.
         Parameters
         ----------
         seed_count: int
@@ -55,10 +58,12 @@ class CartSeed01(Environment):
             self.bad_seed_count = bad_seed_count
             self.variable_bad_seed = False
         self.seed_count = seed_count
+        # Hidden functions that get rescaled
         if bad_seed_reward_f is None:
-            self.bad_seed_reward_f = lambda s, t, a: 1
+            self._bad_seed_reward_f = lambda s, t, a: 1
         else:
-            self.bad_seed_reward_f = bad_seed_reward_f
+            self._bad_seed_reward_f = bad_seed_reward_f
+        self.bad_seed_reward_f = None # Get's set and rescaled on reset()
         if good_seed_reward_f is None:
             self.good_seed_reward_f = lambda s, t, a: 0
         else:
@@ -160,12 +165,19 @@ class CartSeed01(Environment):
         l = list(range(self.seed_count))
         if not self.frozen_order:
             self.rng.shuffle(l)
+
         if self.variable_bad_seed:
             self.bad_seed_count = self.rng.integers(self.seed_count)
-            if self.bad_seed_count > 0:
-                self.bad_seed_reward_f = lambda s, t, a: 100 / (self.bad_seed_count * self.max_count)
-            else:
-                self.bad_seed_reward_f = lambda s, t, a: 1
+
+        # Always scales the reward such that the optimal performance is 100
+        # Does this for defaults as well as calculating optimal points for input functions
+        if self.bad_seed_count > 0:
+            point_max = np.sum([self._bad_seed_reward_f([1, p], None, None) for p in range(self.max_count, 0, -1)]) * \
+                            self.bad_seed_count
+            self.bad_seed_reward_f = lambda s, t, a: self._bad_seed_reward_f(s, t, a) * 100 / point_max
+        else:
+            self.bad_seed_reward_f = self._bad_seed_reward_f
+
         self.bad_seed_indicies = l[:self.bad_seed_count]
         self.good_seed_indicies = l[self.bad_seed_count:]
         self.seeds[self.bad_seed_indicies, :] = [1, self.max_count]
@@ -241,7 +253,7 @@ if __name__ == "__main__":
 
 
     def bad_seed_reward_f(state, *args):
-        if state[1] > 5:
+        if state[1] >= 5:
             return 2
         else:
             return 1
