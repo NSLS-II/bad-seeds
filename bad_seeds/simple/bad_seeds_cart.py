@@ -6,7 +6,7 @@ from tensorforce.environments import Environment
 class CartSeed01(Environment):
 
     def __init__(self, seed_count, *, bad_seed_count=None, max_count=10, frozen_order=False, sequential=False,
-                 revisiting=True, bad_seed_reward_f=None, good_seed_reward_f=None):
+                 revisiting=True, bad_seed_reward_f=None, good_seed_reward_f=None, measurement_time=None):
         """
         Bad seeds, but make it cartpole...
 
@@ -39,6 +39,10 @@ class CartSeed01(Environment):
             Function of the form f(state, terminal, action). Where the state is the resultant state from the action.
         good_seed_reward: function
             Function of the form f(state, terminal, action). Where the state is the resultant state from the action.
+        measurement_time: int
+            Override for max_episode_timesteps in Environment.create().
+            Passing a value of max_episode_timesteps to Environment.create() will override measurement_time and the
+            default max_episode_timesteps(), raising an UnexpectedError if the override value is greater than the others.
         """
         super().__init__()
 
@@ -64,6 +68,7 @@ class CartSeed01(Environment):
         self.frozen_order = bool(frozen_order)
         self.sequential_order = bool(sequential)
         self.revisiting = bool(revisiting)
+        self.measurement_time = measurement_time
         self.visited = set()
         self.timestep = 0
 
@@ -133,9 +138,14 @@ class CartSeed01(Environment):
         """
         Returns
         -------
-        Maximum count equivalent to maximum possible score plus required moves to get there
+        Maximum count equivalent to maximum possible score plus required moves to get there.
+        Is overridden by the use inclusion of max_episode_timesteps in Environment.create() kwargs.
+        (This uses a hidden variable from tensorforce.Environment)
         """
-        return self.max_count * self.bad_seed_count + self.seed_count
+        if self.measurement_time is None:
+            return self.max_count * self.bad_seed_count + self.seed_count
+        else:
+            return self.measurement_time
 
     def reset(self):
         """
@@ -228,18 +238,23 @@ class CartSeed01(Environment):
 
 if __name__ == "__main__":
     np.set_printoptions(precision=3)
+
+
     def bad_seed_reward_f(state, *args):
-        if state[1]>5:
+        if state[1] > 5:
             return 2
         else:
             return 1
-        #return float(state[1]>0) * state[1]
+        # return float(state[1]>0) * state[1]
+
+
     env = Environment.create(environment=CartSeed01,
                              seed_count=3,
                              bad_seed_count=1,
                              sequential=True,
                              revisiting=False,
-                             bad_seed_reward_f=bad_seed_reward_f)
+                             bad_seed_reward_f=bad_seed_reward_f,
+                             measurement_time=50)
     state = env.reset()
     print(f'Start state: {state}')
     print(f"Environmental snaphot:\n {env.seeds}")
@@ -249,4 +264,3 @@ if __name__ == "__main__":
         a = True
         s, t, r = env.execute(a)
         print(f'New seed state: {s}. New seed reward: {r}. Terminal: {t}')
-
