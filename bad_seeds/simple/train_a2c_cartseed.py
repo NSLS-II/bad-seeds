@@ -82,7 +82,14 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16):
             return 1
 
     def monotonic(state, *args):
+        # This worked but would be better described as heavyside linear
         return float(state[1] > 5) * state[1]
+
+    def linear(state, *args):
+        return state[1]
+
+    def square(state, *args):
+        return state[1]**2
 
     def default(state, *args):
         return 1
@@ -90,6 +97,8 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16):
     func_dict = dict(tt2=tt2,
                      tt5=tt5,
                      monotonic=monotonic,
+                     linear=linear,
+                     square=square,
                      default=default)
 
     tensorflow_settings(gpu_idx)
@@ -132,10 +141,10 @@ def manual_main():
 
 
 def main():
-    env, agent = set_up_rushed(timelimit=None,
+    env, agent = set_up_rushed(timelimit=80,
                                scoring='default',
-                               batch_size=16,
-                               gpu_idx=1,)
+                               batch_size=512,
+                               gpu_idx=0)
     runner = Runner(agent=agent, environment=env)
     runner.run(num_episodes=int(3 * 10 ** 3))
     agent.save(directory="saved_models")
