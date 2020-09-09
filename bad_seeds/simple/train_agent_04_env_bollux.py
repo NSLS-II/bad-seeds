@@ -31,29 +31,30 @@ def main():
         variable_noise=0.5,  # changed from 0.1 to 0.5 for agent_04
         environment=bad_seeds_environment,
         summarizer=dict(
-            directory="training_data/agent_04_env_04_1000/summaries",
+            directory="training_data/agent_04_bollux_1000000/summaries",
             # list of labels, or 'all'
             labels=["graph", "entropy", "kl-divergence", "losses", "rewards"],
             frequency=100,  # store values every 100 timesteps
         ),
-        # saver=dict(
-        #     directory='saved_models/agent_04_env_04_1000/checkpoints',
-        #     frequency=600  # save checkpoint every 600 seconds (10 minutes)
-        # ),
+        saver=dict(
+            directory='saved_models/agent_04_bollux_1000000/checkpoints',
+            frequency=6000  # save checkpoint every 6000 seconds (100 minutes)
+        ),
     )
 
     # this is the batch_size = 10000 version
     # I hope it is the last env 04
     runner = Runner(agent=agent, environment=bad_seeds_environment)
-    for i in range(100):
-        print("running 1000 episodes")
-        runner.run(num_episodes=1000)
-        print("saving the agent")
-        directory = Path(f"saved_models/agent_04_env_04_1000/1000_{i}/checkpoints")
-        if directory.exists():
-            directory.rmdir()
-        directory.mkdir(parents=True, exist_ok=True)
-        agent.save(directory=str(directory), format="numpy")
+    runner.run(num_episodes=1000000)
+    #for i in range(100):
+    #    print("running 10000 episodes")
+    #    runner.run(num_episodes=10000)
+    #    print("saving the agent")
+    #    directory = Path(f"saved_models/agent_04_env_04_1000000/10000_{i}/checkpoints")
+    #    if directory.exists():
+    #        directory.rmdir()
+    #    directory.mkdir(parents=True, exist_ok=True)
+    #    agent.save(directory=str(directory), format="numpy")
 
     bad_seeds_environment.close()
     agent.close()
