@@ -15,17 +15,22 @@ def main():
 
     agent = Agent.create(
         agent="ppo",
-        # 113031
-        # batch_size=10,
-        # variable_noise=0.1,
-
-        # 120700
-        #batch_size=100,
-        #variable_noise=0.1,
 
         #
-        batch_size=1000,
+        batch_size=10,
         variable_noise=0.1,
+
+        #
+        # batch_size=100,
+        # variable_noise=0.1,
+
+        #
+        # batch_size=1000,
+        # variable_noise=0.1,
+
+        #
+        # batch_size=10000,
+        # variable_noise=0.1,
 
         environment=bad_seeds_environment,
         summarizer=dict(
