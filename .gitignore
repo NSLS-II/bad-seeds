@@ -1,4 +1,5 @@
 data/*
+notebooks/training_data/*
 saved_models/*
 training_data/*
 
