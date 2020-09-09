@@ -10,7 +10,7 @@ from bad_seeds.simple.bad_seeds_04_bollux import Bollux
 def main():
 
     bad_seeds_environment = Environment.create(
-        environment=Bollux, seed_count=10, bad_seed_count=3, max_episode_length=100
+        environment=Bollux, seed_count=10, bad_seed_count=3, max_episode_length=100, max_episode_timesteps=100
     )
 
     agent = Agent.create(
@@ -30,9 +30,7 @@ def main():
         environment=bad_seeds_environment,
         summarizer=dict(
             directory="training_data/agent_ppo_01_env_bollux_1000/summaries",
-            # list of labels, or 'all'
             labels=["graph", "entropy", "kl-divergence", "losses", "rewards"],
-            frequency=100,  # store values every 100 timesteps
         ),
         # saver=dict(
         #     directory='saved_models/agent_04_env_04_1000/checkpoints',
