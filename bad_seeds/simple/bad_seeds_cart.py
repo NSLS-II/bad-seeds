@@ -257,7 +257,7 @@ class CartSeed02(CartSeed01):
     def reset(self):
         super().reset()
         for i in self.bad_seed_indicies:
-            self.seeds[i, 1] = self.rng.integers(self.max_count)
+            self.seeds[i, 1] = self.rng.integers(1, self.max_count)
 
         # Always scales the reward such that the optimal performance is 100
         # Does this for defaults as well as calculating optimal points for input functions
@@ -269,7 +269,7 @@ class CartSeed02(CartSeed01):
             self.bad_seed_reward_f = self._bad_seed_reward_f
 
         self.total_max_count = np.sum(self.seeds[:, 1])
-        state = self.seeds[self.current_idx, 1]
+        state = np.array([self.seeds[self.current_idx, 1]])
         return state
 
     def max_episode_timesteps(self):
@@ -319,7 +319,7 @@ class CartSeed02(CartSeed01):
             # Clear previously visited or complete episode if all samples visited
             if len(self.visited) == self.seed_count:
                 if not self.revisiting:
-                    state = self.seeds[prev_index, 1]
+                    state = np.array([self.seeds[prev_index, 1]])
                     terminal = True
                     reward = self.good_seed_reward(state, terminal, actions)
                     return state, terminal, reward
@@ -338,7 +338,7 @@ class CartSeed02(CartSeed01):
             self.visited.add(self.current_idx)
 
         self.exp_sequence.append(self.current_idx)
-        state = self.seeds[self.current_idx, 1]
+        state = np.array([self.seeds[self.current_idx, 1]])
 
         if self.timestep >= self.max_episode_timesteps():
             terminal = True
