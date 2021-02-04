@@ -1,7 +1,7 @@
 from tensorforce.agents import Agent
 from tensorforce.environments import Environment
 from tensorforce.execution import Runner
-from bad_seeds.simple.bad_seeds_cart import CartSeed01
+from bad_seeds.simple.bad_seeds_cart import CartSeed01, CartSeed02
 
 
 def tensorflow_settings(gpu_idx):
@@ -55,7 +55,7 @@ def set_up(gpu_idx=0):
     return env, agent
 
 
-def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16):
+def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16, env_version=1, seed_count=10):
     """
     What happens when our friendly agent has a time constraint.
     Parameters
@@ -64,7 +64,7 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16):
     scoring: key for function dict
 
     Returns
-    -------
+    -------ee
     env
     agent
     """
@@ -102,20 +102,31 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16):
                      default=default)
 
     tensorflow_settings(gpu_idx)
-    environment = CartSeed01(seed_count=10,
-                             bad_seed_count=None,
-                             max_count=10,
-                             sequential=True,
-                             revisiting=True,
-                             bad_seed_reward_f=func_dict.get(scoring, None),
-                             measurement_time=timelimit)
+    if env_version == 1:
+        environment = CartSeed01(seed_count=seed_count,
+                                 bad_seed_count=None,
+                                 max_count=10,
+                                 sequential=True,
+                                 revisiting=True,
+                                 bad_seed_reward_f=func_dict.get(scoring, None),
+                                 measurement_time=timelimit)
+    elif env_version == 2:
+        environment = CartSeed02(seed_count=seed_count,
+                                 bad_seed_count=None,
+                                 max_count=10,
+                                 sequential=True,
+                                 revisiting=True,
+                                 bad_seed_reward_f=func_dict.get(scoring, None),
+                                 measurement_time=timelimit)
+    else:
+        raise NotImplementedError
     env = Environment.create(environment=environment)
     agent = Agent.create(
         agent="a2c",
         batch_size=batch_size,
         environment=env,
         summarizer=dict(
-            directory="training_data/a2c_cartseed/{}_{}_{}".format(timelimit, scoring, batch_size),
+            directory="training_data/a2c_cartseed/{}_{}_{}_{}".format(env_version, timelimit, scoring, batch_size),
             labels="all",
             frequency=1,
         ),
@@ -141,10 +152,11 @@ def manual_main():
 
 
 def main():
-    env, agent = set_up_rushed(timelimit=80,
+    env, agent = set_up_rushed(timelimit=None,
                                scoring='default',
-                               batch_size=512,
-                               gpu_idx=0)
+                               batch_size=128,
+                               gpu_idx=0,
+                               env_version=2)
     runner = Runner(agent=agent, environment=env)
     runner.run(num_episodes=int(3 * 10 ** 3))
     agent.save(directory="saved_models")
