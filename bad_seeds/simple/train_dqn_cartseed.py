@@ -1,7 +1,7 @@
 from tensorforce.agents import Agent
 from tensorforce.environments import Environment
 from tensorforce.execution import Runner
-from bad_seeds.environments.bad_seeds_cart import CartSeed01
+from bad_seeds.environments.cartseed import CartSeed
 
 
 def tensorflow_settings():
@@ -25,7 +25,7 @@ def tensorflow_settings():
 def set_up():
     tensorflow_settings()
     env = Environment.create(
-        environment=CartSeed01,
+        environment=CartSeed,
         seed_count=10,
         bad_seed_count=None,
         max_count=10

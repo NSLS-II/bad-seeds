@@ -1,9 +1,8 @@
-from collections import deque
 import numpy as np
 from tensorforce.environments import Environment
 
 
-class CartSeed01(Environment):
+class CartSeed(Environment):
 
     def __init__(self, seed_count, *, bad_seed_count=None, max_count=10, frozen_order=False, sequential=False,
                  revisiting=True, bad_seed_reward_f=None, good_seed_reward_f=None,
@@ -248,7 +247,7 @@ class CartSeed01(Environment):
         return state, terminal, reward
 
 
-class CartSeed02(CartSeed01):
+class CartSeedCountdown(CartSeed):
     """ CartSeed01, with variable countdown, and no boolean in state"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -368,7 +367,7 @@ if __name__ == "__main__":
 
     # environment = CartSeed01(seed_count=3, bad_seed_count=1, sequential=True, revisiting=False,
     #                          bad_seed_reward_f=bad_seed_reward_f, measurement_time=50)
-    environment = CartSeed02(seed_count=3, bad_seed_count=1)
+    environment = CartSeedCountdown(seed_count=3, bad_seed_count=1)
     env = Environment.create(environment=environment)
     state = env.reset()
     print(f'Start state: {state}')

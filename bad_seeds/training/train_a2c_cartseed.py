@@ -1,14 +1,14 @@
 from tensorforce.agents import Agent
 from tensorforce.environments import Environment
 from tensorforce.execution import Runner
-from bad_seeds.environments.bad_seeds_cart import CartSeed01, CartSeed02
+from bad_seeds.environments.cartseed import CartSeed, CartSeedCountdown
 from bad_seeds.utils.tf_utils import tensorflow_settings
 
 
 def set_up(gpu_idx=0):
     tensorflow_settings(gpu_idx)
     env = Environment.create(
-        environment=CartSeed01,
+        environment=CartSeed,
         seed_count=10,
         bad_seed_count=None,
         max_count=10,
@@ -47,7 +47,7 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16, env_vers
     scoring: key for function dict
 
     Returns
-    -------ee
+    -------
     env
     agent
     """
@@ -86,21 +86,21 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16, env_vers
 
     tensorflow_settings(gpu_idx)
     if env_version == 1:
-        environment = CartSeed01(seed_count=seed_count,
-                                 bad_seed_count=None,
-                                 max_count=10,
-                                 sequential=True,
-                                 revisiting=True,
-                                 bad_seed_reward_f=func_dict.get(scoring, None),
-                                 measurement_time=timelimit)
+        environment = CartSeed(seed_count=seed_count,
+                               bad_seed_count=None,
+                               max_count=10,
+                               sequential=True,
+                               revisiting=True,
+                               bad_seed_reward_f=func_dict.get(scoring, None),
+                               measurement_time=timelimit)
     elif env_version == 2:
-        environment = CartSeed02(seed_count=seed_count,
-                                 bad_seed_count=None,
-                                 max_count=10,
-                                 sequential=True,
-                                 revisiting=True,
-                                 bad_seed_reward_f=func_dict.get(scoring, None),
-                                 measurement_time=timelimit)
+        environment = CartSeedCountdown(seed_count=seed_count,
+                                        bad_seed_count=None,
+                                        max_count=10,
+                                        sequential=True,
+                                        revisiting=True,
+                                        bad_seed_reward_f=func_dict.get(scoring, None),
+                                        measurement_time=timelimit)
     else:
         raise NotImplementedError
     env = Environment.create(environment=environment)
