@@ -24,7 +24,7 @@ class CartSeed(Environment):
         ----------
         seed_count: int
             Number of total seeds
-        bad_seed_count: int
+        bad_seed_count: int, None
             Number of bad seeds. If None, a variable amount will be used for each reset.
         max_count: int
             Maximum number of samples/scans needed to saturate a bad_seed

@@ -3,53 +3,39 @@ from tensorforce.environments import Environment
 from tensorforce.execution import Runner
 from bad_seeds.environments.cartseed import CartSeed, CartSeedCountdown
 from bad_seeds.utils.tf_utils import tensorflow_settings
+from pathlib import Path
 
 
-def set_up(gpu_idx=0):
-    tensorflow_settings(gpu_idx)
-    env = Environment.create(
-        environment=CartSeed,
-        seed_count=10,
-        bad_seed_count=None,
-        max_count=10,
-        sequential=True
-    )
-
-    agent = Agent.create(
-        agent="a2c",
-        batch_size=1,
-        # Best and slowest batch size is 1, larger batch size will decrease speed
-        # The following were shown effective in prelim tests and should be optimized with
-        # and appropriate hyperparameter opt scheme: discount, exploration, l2_regularization.
-        # discount=0.97,
-        # exploration=0.05,
-        # l2_regularization=0.1,
-        environment=env,
-        summarizer=dict(
-            directory="training_data/a2c_cartseed/summaries",
-            labels="all",
-            frequency=1,
-        ),
-        # saver=dict(
-        #     directory='saved_models/agent_04_env_04_1000/checkpoints',
-        #     frequency=600  # save checkpoint every 600 seconds (10 minutes)
-        # ),
-    )
-    return env, agent
-
-
-def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16, env_version=1, seed_count=10):
+def set_up(timelimit=50,
+           scoring=None,
+           gpu_idx=0,
+           batch_size=16,
+           env_version=1,
+           seed_count=10.,
+           out_path=None):
     """
-    What happens when our friendly agent has a time constraint.
+    Set up a rushed CartSeed agent with less time than it needs to complete an episode.
     Parameters
     ----------
-    timelimit: int, max_episode_timesteps
-    scoring: key for function dict
+    timelimit : int
+        Turn time limit for episode
+    scoring : str in {'t22', 'tt5', 'monotonic', 'linear', 'square', 'default'
+        Name of reward function
+    gpu_idx : int
+        optional index for GPU
+    batch_size : int
+        Batch size for training
+    env_version : int in {1, 2}
+        Environment version. 1 being ideal time, 2 being time limited
+    seed_count : int
+        Number of bad seeds
+    out_path : path
+        Toplevel dir for output of models and checkpoints
 
     Returns
     -------
-    env
-    agent
+    Environment
+    Agent
     """
 
     def tt2(state, *args):
@@ -85,6 +71,10 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16, env_vers
                      default=default)
 
     tensorflow_settings(gpu_idx)
+    if out_path is None:
+        out_path = Path().absolute()
+    else:
+        out_path = Path(out_path).expanduser().absolute()
     if env_version == 1:
         environment = CartSeed(seed_count=seed_count,
                                bad_seed_count=None,
@@ -109,7 +99,7 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16, env_vers
         batch_size=batch_size,
         environment=env,
         summarizer=dict(
-            directory="training_data/a2c_cartseed/{}_{}_{}_{}".format(env_version, timelimit, scoring, batch_size),
+            directory=out_path / "training_data/a2c_cartseed/{}_{}_{}_{}".format(env_version, timelimit, scoring, batch_size),
             labels="all",
             frequency=1,
         ),
@@ -135,11 +125,11 @@ def manual_main():
 
 
 def main():
-    env, agent = set_up_rushed(timelimit=None,
-                               scoring='default',
-                               batch_size=128,
-                               gpu_idx=0,
-                               env_version=2)
+    env, agent = set_up(timelimit=None,
+                        scoring='default',
+                        batch_size=128,
+                        gpu_idx=0,
+                        env_version=2)
     runner = Runner(agent=agent, environment=env)
     runner.run(num_episodes=int(3 * 10 ** 3))
     agent.save(directory="saved_models")
