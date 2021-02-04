@@ -27,8 +27,8 @@ def set_up():
     env = Environment.create(
         environment=CartSeed01,
         seed_count=10,
-        bad_seed_count=3,
-        max_count=20
+        bad_seed_count=None,
+        max_count=10
     )
 
     agent = Agent.create(
@@ -36,13 +36,14 @@ def set_up():
         environment=env,
         batch_size=256,
         memory=int(10 ** 6),
+        exploration=0.05,
         summarizer=dict(
             directory="training_data/dqn_cartseed/summaries",
             labels="all",
             frequency=1,
         ),
         # saver=dict(
-        #     directory='saved_models/agent_04_env_04_1000/checkpoints',
+        #     directory='saved_models/dqn_cartseed/checkpoints',
         #     frequency=600  # save checkpoint every 600 seconds (10 minutes)
         # ),
     )
@@ -52,9 +53,9 @@ def set_up():
 def main():
     env, agent = set_up()
     runner = Runner(agent=agent, environment=env)
-    runner.run(num_episodes=10000)
-    agent.save(directory="saved_models")
-    agent.close()
+    runner.run(num_episodes=int(10**6))
+    agent.save(directory="saved_models/dqn_cartseed")
+    # agent.close()
     env.close()
 
 
