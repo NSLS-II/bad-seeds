@@ -12,7 +12,6 @@ bad-seeds
 Learn to efficiently measure samples at a beamline.
 
 * Free software: 3-clause BSD license
-* Documentation: (COMING SOON!) https://jklynch.github.io/bad-seeds.
 
 Features
 --------
