@@ -1,25 +1,8 @@
 from tensorforce.agents import Agent
 from tensorforce.environments import Environment
 from tensorforce.execution import Runner
-from bad_seeds.simple.bad_seeds_cart import CartSeed01, CartSeed02
-
-
-def tensorflow_settings(gpu_idx):
-    import tensorflow as tf
-    import os
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    if gpus:
-        # Restrict TensorFlow to only use the last GPU, and dynamically grow memory use
-        try:
-            tf.config.experimental.set_visible_devices(gpus[gpu_idx], 'GPU')
-            for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)
-            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-            print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
-        except RuntimeError as e:
-            # Visible devices must be set before GPUs have been initialized
-            print(e)
+from bad_seeds.environments.bad_seeds_cart import CartSeed01, CartSeed02
+from bad_seeds.utils.tf_utils import tensorflow_settings
 
 
 def set_up(gpu_idx=0):
@@ -89,7 +72,7 @@ def set_up_rushed(timelimit=50, scoring=None, gpu_idx=0, batch_size=16, env_vers
         return state[1]
 
     def square(state, *args):
-        return state[1]**2
+        return state[1] ** 2
 
     def default(state, *args):
         return 1

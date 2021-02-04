@@ -1,7 +1,7 @@
 from tensorforce.agents import Agent
 from tensorforce.environments import Environment
 from tensorforce.execution import Runner
-from bad_seeds.simple.bad_seeds_cart import CartSeed01
+from bad_seeds.environments.bad_seeds_cart import CartSeed01
 
 
 def tensorflow_settings():
