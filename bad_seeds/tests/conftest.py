@@ -2,6 +2,7 @@ import pytest
 from bad_seeds.environments.cartseed import CartSeedCountdown, CartSeed
 from tensorforce.environments import Environment
 
+
 @pytest.fixture
 def default_cartseed():
     """
@@ -16,6 +17,7 @@ def default_cartseed():
                    )
     env = Environment.create(environment=env)
     return env
+
 
 @pytest.fixture
 def default_cartseedcountdown():
