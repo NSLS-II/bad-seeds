@@ -41,7 +41,7 @@ class CartSeed(Environment):
             Function of the form f(state, terminal, action). Where the state is the resultant state from the action.
         good_seed_reward: function
             Function of the form f(state, terminal, action). Where the state is the resultant state from the action.
-        measurement_time: int
+        measurement_time: int, None
             Override for max_episode_timesteps in Environment.create().
             Passing a value of max_episode_timesteps to Environment.create() will override measurement_time and the
             default max_episode_timesteps(), raising an UnexpectedError if the override value is greater than the others.
