@@ -50,7 +50,7 @@ This package has been tested exclusively on Linux operating systems containing C
 
 Python dependencies
 ------------------------------------------------------------------------------------------------------------------------
-This package mainly depends on the ``tensorboard`` RL stack::
+This package mainly depends on the ``tensorboard`` RL stack and some scientific utilities::
 
     tensorboard
     tensorflow
@@ -73,4 +73,13 @@ Install from github::
 
 A simple demonstration
 ************************************************************************************************************************
-Example code of the training pipeline used in  the study is available in the `examples module <./examples/>`_.
+Example code of the training pipeline used in  the study is available in the `examples module <./bad_seeds/examples/>`_.
+One example is given to reproduce the data for comparing the impact of batch size on learning curves.
+
+A second example is given for comparing the impact of a variable time limit on the measurement episodes.
+In both cases the default is to do a ``simple`` experiment for the sake of demonstration.
+
+If ``simple=False`` is set in the main, a more complete (and more expensive!) experiment will be run which will converge
+to similiar results presented in the `published data folder <./published_results>`_.
+
+Matplotlib functions to cast this data as seen in the paper are presented in the `plot module <./bad_seeds/plot/>`_.
