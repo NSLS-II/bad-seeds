@@ -180,6 +180,6 @@ def main(*,
         out_path = Path()
     else:
         out_path = Path(out_path).expanduser()
-    agent.save(directory=out_path / "saved_models")
+    agent.save(directory=str(out_path / "saved_models"))
     agent.close()
     env.close()
