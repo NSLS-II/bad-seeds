@@ -5,10 +5,7 @@ import numpy as np
 from tensorforce.environments import Environment
 
 
-from bad_seeds.simple._version import get_versions
 
-__version__ = get_versions()["version"]
-del get_versions
 
 
 class BadSeeds(Environment):
