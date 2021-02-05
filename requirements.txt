@@ -1,6 +1,3 @@
-gym
-jupyter
-keras
 matplotlib
 numpy
 scipy
