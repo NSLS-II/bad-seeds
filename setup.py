@@ -35,9 +35,9 @@ with open(path.join(here, 'requirements.txt')) as requirements_file:
 try:
     num_gpus = len(check_output(['nvidia-smi', '--query-gpu=gpu_name',
                                  '--format=csv'], shell=True).decode().strip().split('\n'))
-    tf = 'tensorflow-gpu=2.2.0' if num_gpus > 1 else 'tensorflow=2.2.0'
+    tf = 'tensorflow-gpu==2.2.0' if num_gpus > 1 else 'tensorflow==2.2.0'
 except CalledProcessError:
-    tf = 'tensorflow=2.2.0'
+    tf = 'tensorflow==2.2.0'
 
 requirements = [tf] + requirements
 
