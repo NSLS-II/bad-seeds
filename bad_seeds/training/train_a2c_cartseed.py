@@ -11,13 +11,13 @@ def set_up(timelimit=50,
            gpu_idx=0,
            batch_size=16,
            env_version=1,
-           seed_count=10.,
+           seed_count=10,
            out_path=None):
     """
     Set up a rushed CartSeed agent with less time than it needs to complete an episode.
     Parameters
     ----------
-    timelimit : int
+    timelimit : int, None
         Turn time limit for episode
     scoring : str in {'t22', 'tt5', 'monotonic', 'linear', 'square', 'default'
         Name of reward function
@@ -99,7 +99,8 @@ def set_up(timelimit=50,
         batch_size=batch_size,
         environment=env,
         summarizer=dict(
-            directory=out_path / "training_data/a2c_cartseed/{}_{}_{}_{}".format(env_version, timelimit, scoring, batch_size),
+            directory=out_path / "training_data/a2c_cartseed/{}_{}_{}_{}".format(env_version, timelimit, scoring,
+                                                                                 batch_size),
             labels="all",
             frequency=1,
         ),
@@ -109,6 +110,14 @@ def set_up(timelimit=50,
 
 
 def manual_main():
+    """
+    A manual looping main that shows how each step of the reinforcement learning proceeds in a given episode.
+    This is strictly instructional.
+
+    Returns
+    -------
+    None
+    """
     env, agent = set_up()
     for i in range(100):
         states = env.reset()
@@ -124,18 +133,53 @@ def manual_main():
         print(f"Episode reward: {episode_reward}. Episode length {episode_len}")
 
 
-def main():
-    env, agent = set_up(timelimit=None,
-                        scoring='default',
-                        batch_size=128,
-                        gpu_idx=0,
-                        env_version=2)
+def main(*,
+         timelimit=None,
+         scoring='default',
+         batch_size=16,
+         gpu_idx=0,
+         env_version=2,
+         out_path=None,
+         num_episodes=int(3 * 10 ** 3)):
+    """
+    A self contained set up of the environment and run.
+    Can be used to create all of the figures associated in the reference for variable batch size and
+    variable time limit. All experiments use 10 'seeds'.
+
+    Parameters
+    ----------
+    timelimit : int, None
+        Turn time limit for episode
+    scoring : str in {'t22', 'tt5', 'monotonic', 'linear', 'square', 'default'
+        Name of reward function
+    batch_size : int
+        Batch size for training
+    gpu_idx : int
+        optional index for GPU
+    env_version : int in {1, 2}
+        Environment version. 1 being ideal time, 2 being time limited
+    out_path : path
+        Toplevel dir for output of models and checkpoints
+    num_episodes: int
+        Number of episodes to learn over
+
+    Returns
+    -------
+    None
+
+    """
+    env, agent = set_up(timelimit=timelimit,
+                        scoring=scoring,
+                        batch_size=batch_size,
+                        gpu_idx=gpu_idx,
+                        env_version=env_version,
+                        out_path=out_path)
     runner = Runner(agent=agent, environment=env)
-    runner.run(num_episodes=int(3 * 10 ** 3))
-    agent.save(directory="saved_models")
+    runner.run(num_episodes=num_episodes)
+    if out_path is None:
+        out_path = Path()
+    else:
+        out_path = Path(out_path).expanduser()
+    agent.save(directory=out_path / "saved_models")
     agent.close()
     env.close()
-
-
-if __name__ == "__main__":
-    main()
