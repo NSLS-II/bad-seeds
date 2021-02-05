@@ -2,6 +2,7 @@ from os import path
 from setuptools import setup, find_packages
 import sys
 import versioneer
+from subprocess import check_output, CalledProcessError
 
 
 # NOTE: This file must remain Python 2 compatible for the foreseeable future,
@@ -31,17 +32,24 @@ with open(path.join(here, 'requirements.txt')) as requirements_file:
     # Parse requirements.txt, ignoring any commented-out lines.
     requirements = [line for line in requirements_file.read().splitlines()
                     if not line.startswith('#')]
+try:
+    num_gpus = len(check_output(['nvidia-smi', '--query-gpu=gpu_name',
+                                 '--format=csv'], shell=True).decode().strip().split('\n'))
+    tf = 'tensorflow-gpu=2.2.0' if num_gpus > 1 else 'tensorflow=2.2.0'
+except CalledProcessError:
+    tf = 'tensorflow=2.2.0'
 
+requirements = [tf] + requirements
 
 setup(
-    name='bad-seeds',
+    name='bad_seeds',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="Learn to efficiently measure samples at a beamline.",
     long_description=readme,
     author="Brookhaven National Lab",
     author_email='',
-    url='https://github.com/jklynch/bad-seeds',
+    url='https://github.com/bnl/pub-Maffettone_2020_MLST',
     python_requires='>={}'.format('.'.join(str(n) for n in min_version)),
     packages=find_packages(exclude=['docs', 'tests']),
     entry_points={
@@ -55,6 +63,7 @@ setup(
             # When adding files here, remember to update MANIFEST.in as well,
             # or else they will not be included in the distribution on PyPI!
             # 'path/to/data_file',
+            'published_results/*.csv'
         ]
     },
     install_requires=requirements,
