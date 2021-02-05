@@ -248,7 +248,15 @@ class CartSeed(Environment):
 
 
 class CartSeedCountdown(CartSeed):
-    """ CartSeed01, with variable countdown, and no boolean in state"""
+    """
+    CartSeed01, with variable countdown (proxy for badness of seed), and no boolean in state
+
+    Assuming the envrionment experiences two kinds of seeds:
+            - Good Seeds that no longer need to be sampled
+            - Bad Seeds that need to be sampled a randomly initialized amount (less than or equal to max_count)
+
+    See CartSeed for further details which are identical.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.total_max_count = self.max_count * self.bad_seed_count
