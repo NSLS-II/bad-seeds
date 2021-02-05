@@ -6,7 +6,7 @@ from bad_seeds.utils.tf_utils import tensorflow_settings
 from pathlib import Path
 
 
-def set_up(timelimit=50,
+def set_up(time_limit=50,
            scoring=None,
            gpu_idx=0,
            batch_size=16,
@@ -17,7 +17,7 @@ def set_up(timelimit=50,
     Set up a rushed CartSeed agent with less time than it needs to complete an episode.
     Parameters
     ----------
-    timelimit : int, None
+    time_limit : int, None
         Turn time limit for episode
     scoring : str in {'t22', 'tt5', 'monotonic', 'linear', 'square', 'default'
         Name of reward function
@@ -82,7 +82,7 @@ def set_up(timelimit=50,
                                sequential=True,
                                revisiting=True,
                                bad_seed_reward_f=func_dict.get(scoring, None),
-                               measurement_time=timelimit)
+                               measurement_time=time_limit)
     elif env_version == 2:
         environment = CartSeedCountdown(seed_count=seed_count,
                                         bad_seed_count=None,
@@ -90,7 +90,7 @@ def set_up(timelimit=50,
                                         sequential=True,
                                         revisiting=True,
                                         bad_seed_reward_f=func_dict.get(scoring, None),
-                                        measurement_time=timelimit)
+                                        measurement_time=time_limit)
     else:
         raise NotImplementedError
     env = Environment.create(environment=environment)
@@ -99,7 +99,7 @@ def set_up(timelimit=50,
         batch_size=batch_size,
         environment=env,
         summarizer=dict(
-            directory=out_path / "training_data/a2c_cartseed/{}_{}_{}_{}".format(env_version, timelimit, scoring,
+            directory=out_path / "training_data/a2c_cartseed/{}_{}_{}_{}".format(env_version, time_limit, scoring,
                                                                                  batch_size),
             labels="all",
             frequency=1,
@@ -134,7 +134,7 @@ def manual_main():
 
 
 def main(*,
-         timelimit=None,
+         time_limit=None,
          scoring='default',
          batch_size=16,
          gpu_idx=0,
@@ -148,7 +148,7 @@ def main(*,
 
     Parameters
     ----------
-    timelimit : int, None
+    time_limit : int, None
         Turn time limit for episode
     scoring : str in {'t22', 'tt5', 'monotonic', 'linear', 'square', 'default'
         Name of reward function
@@ -168,7 +168,7 @@ def main(*,
     None
 
     """
-    env, agent = set_up(timelimit=timelimit,
+    env, agent = set_up(time_limit=time_limit,
                         scoring=scoring,
                         batch_size=batch_size,
                         gpu_idx=gpu_idx,
