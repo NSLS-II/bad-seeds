@@ -40,20 +40,25 @@ def load_accumulator(path):
     return w_times, step_nums, [float(tf.make_ndarray(a)) for a in vals]
 
 
-def csv_from_accumulator(path):
+def csv_from_accumulator(path, csv_path=None):
     """
     Construct a csv from a tensorboard summary,
     placing the csv in the parent's parent directory, with the same name as the parent
     Parameters
     ----------
-    path : str, pathlike
+    path : str, Path
         Tensorboard summary directory
+    csv_path : Path
+        Output csv directory
 
     Returns
     -------
 
     """
-    csv_path = path.parent.parent / Path(path.parent.name + '.csv')
+    if csv_path is None:
+        csv_path = path.parent.parent / Path(path.parent.name + '.csv')
+    else:
+        csv_path = Path(csv_path).expanduser()
     w_times, step_nums, vals = load_accumulator(path)
     df = pd.DataFrame({'wall': w_times, 'step': step_nums, 'val': vals})
     df.to_csv(str(csv_path), index=False)
