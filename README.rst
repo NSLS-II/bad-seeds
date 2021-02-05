@@ -74,6 +74,7 @@ Install from github::
 A simple demonstration
 ************************************************************************************************************************
 Example code of the training pipeline used in  the study is available in the `examples module <./bad_seeds/examples/>`_.
+
 One example is given to reproduce the data for comparing the impact of batch size on learning curves.
 
 A second example is given for comparing the impact of a variable time limit on the measurement episodes.
@@ -82,4 +83,7 @@ In both cases the default is to do a ``simple`` experiment for the sake of demon
 If ``simple=False`` is set in the main, a more complete (and more expensive!) experiment will be run which will converge
 to similiar results presented in the `published data folder <./published_results>`_.
 
-Matplotlib functions to cast this data as seen in the paper are presented in the `plot module <./bad_seeds/plot/>`_.
+Matplotlib functions to cast this data as seen in the paper are presented in the `plot module <./bad_seeds/plot/>`_.::
+
+    $ python bad_seeds/examples/variable_batch_size.py
+    $ python bad_seeds/examples/variable_time_limit.py
