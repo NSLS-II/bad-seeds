@@ -3,6 +3,7 @@ import os
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 from pathlib import Path
 import pandas as pd
+import logging
 
 
 def tensorflow_settings(gpu_idx=0):
@@ -17,7 +18,8 @@ def tensorflow_settings(gpu_idx=0):
     -------
     None
     """
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    logger = tf.get_logger()
+    logger.setLevel(logging.ERROR)
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
         # Restrict TensorFlow to a specific GPU, and dynamically grow memory use
