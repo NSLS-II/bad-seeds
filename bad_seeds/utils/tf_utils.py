@@ -31,12 +31,14 @@ def tensorflow_settings(gpu_idx=0):
             # Visible devices must be set before GPUs have been initialized
             print(e)
 
+
 def load_accumulator(path):
     """Extract data from tensorboard summaries"""
     event_acc = EventAccumulator(str(path), size_guidance={'tensors': 0})
     event_acc.Reload()
     w_times, step_nums, vals = zip(*event_acc.Tensors('agent.observe/episode-reward'))
     return w_times, step_nums, [float(tf.make_ndarray(a)) for a in vals]
+
 
 def csv_from_accumulator(path):
     """
