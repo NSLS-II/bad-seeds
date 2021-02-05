@@ -33,3 +33,9 @@ def default_cartseedcountdown():
                             )
     env = Environment.create(environment=env)
     return env
+
+
+@pytest.fixture
+def default_setup():
+    from bad_seeds.training.train_a2c_cartseed import set_up
+    return set_up()
