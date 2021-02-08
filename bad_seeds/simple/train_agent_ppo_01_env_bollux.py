@@ -19,15 +19,21 @@ def main():
 
     agent = Agent.create(
         agent="ppo",
-        # 140804  - 1000 episodes only
-        # 151604  - catastrophic forgetting
-        # 174356  - catastrophic forgetting
-        # batch_size=10,
+        #
+        batch_size=10,
+        variable_noise=0.1,
+
+        #
+        # batch_size=100,
         # variable_noise=0.1,
 
-        # 230046 -- 50000 episodes, save model at the end
-        batch_size=50,
-        variable_noise=0.1,
+        #
+        # batch_size=1000,
+        # variable_noise=0.1,
+
+        #
+        # batch_size=10000,
+        # variable_noise=0.1,
 
         # 152501
         # batch_size=100,
