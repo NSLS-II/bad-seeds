@@ -38,6 +38,7 @@ def main(simple=True):
     out_path = Path().absolute() / 'example_results'
     run_args = {f'{i}_default_{batch_size}': SetupArgs(i, batch_size, 2, out_path, num_episodes) for i in time_limits}
     for key, setup_args in run_args.items():
+        print(f'{key}: {setup_args}')
         train_a2c_cartseed.main(**setup_args._asdict())
         summary_path = sorted((out_path / 'training_data' / 'a2c_cartseed' /
                                f'{setup_args.env_version}_{setup_args.time_limit}_default_{setup_args.batch_size}').glob('summary-*'))[0]

@@ -69,21 +69,38 @@ Install from github::
     $ source bs_env/bin/activate
     $ git clone https://github.com/bnl/pub-Maffettone_2020_MLST
     $ cd pub-Maffettone_2020_MLST
+    $ python -m pip --upgrade pip wheel
     $ python -m pip install .
 
 A simple demonstration
 ************************************************************************************************************************
 Example code of the training pipeline used in  the study is available in the `examples module <./bad_seeds/examples/>`_.
 
-One example is given to reproduce the data for comparing the impact of batch size on learning curves.
+One example is given to reproduce the data for comparing the impact of batch size on learning curves::
 
-A second example is given for comparing the impact of a variable time limit on the measurement episodes.
+    $ python bad_seeds/examples/variable_batch_size.py
+    batch_64: SetupArgs(batch_size=64, env_version=2, out_path=PosixPath('./bad_seeds/examples/example_results'), num_episodes=250)
+    X Physical GPUs, 1 Logical GPU
+    Episodes: 100%|█| 250/250 [02:17, reward=83.33, ts/ep=16, sec/ep=0.27, ms/ts=16.
+    batch_512: SetupArgs(batch_size=512, env_version=2, out_path=PosixPath('./bad_seeds/examples/example_results'), num_episodes=250)
+    X Physical GPUs, 1 Logical GPU
+    Episodes: 100%|█| 250/250 [02:20, reward=60.87, ts/ep=33, sec/ep=0.54, ms/ts=16.
+
+A second example is given for comparing the impact of a variable time limit on the measurement episodes.::
+
+    $ python bad_seeds/examples/variable_time_limit.py
+    20_default_16: SetupArgs(time_limit=20, batch_size=16, env_version=2, out_path=PosixPath('./bad_seeds/examples/example_results'), num_episodes=250)
+    X Physical GPUs, 1 Logical GPU
+    Episodes: 100%|█| 250/250 [01:29, reward=100.00, ts/ep=20, sec/ep=0.34, ms/ts=16
+    40_default_16: SetupArgs(time_limit=40, batch_size=16, env_version=2, out_path=PosixPath('./bad_seeds/examples/example_results'), num_episodes=250)
+    X Physical GPUs, 1 Logical GPU
+    Episodes: 100%|█| 250/250 [02:51, reward=100.00, ts/ep=40, sec/ep=0.66, ms/ts=16
+    70_default_16: SetupArgs(time_limit=70, batch_size=16, env_version=2, out_path=PosixPath('./bad_seeds/examples/example_results'), num_episodes=250)
+    X Physical GPUs, 1 Logical GPU
+    Episodes: 100%|█| 250/250 [04:56, reward=100.00, ts/ep=70, sec/ep=1.16, ms/ts=16
+
 In both cases the default is to do a ``simple`` experiment for the sake of demonstration.
-
 If ``simple=False`` is set in the main, a more complete (and more expensive!) experiment will be run which will converge
 to similiar results presented in the `published data folder <./published_results>`_.
 
-Matplotlib functions to cast this data as seen in the paper are presented in the `plot module <./bad_seeds/plot/>`_.::
-
-    $ python bad_seeds/examples/variable_batch_size.py
-    $ python bad_seeds/examples/variable_time_limit.py
+Matplotlib functions to cast this data as seen in the paper are presented in the `plot module <./bad_seeds/plot/>`_.
