@@ -80,6 +80,8 @@ class Bollux(Environment):
 
         self.total_reward = None
 
+        self.debug = False
+
         self.reset()
 
     def states(self):
@@ -180,6 +182,8 @@ class Bollux(Environment):
             if self.rng.random(size=1) < self.reward_probability:
                 reward = self.calculate_reward()
             else:
+                if self.debug:
+                    print(f"no reward for turn {self.turn}")
                 reward = 0.0
         else:
             terminal = True
@@ -187,6 +191,8 @@ class Bollux(Environment):
 
         self.turn += 1
 
+        if self.debug:
+            print(f"for action {actions} reward {reward}")
         return next_state, terminal, reward
 
     def calculate_reward(self):
