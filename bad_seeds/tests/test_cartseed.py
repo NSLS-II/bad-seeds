@@ -16,13 +16,14 @@ from bad_seeds.environments.cartseed import CartSeed, CartSeedCountdown
 # Multi functional max_episode_timesteps (with and without kwarg)
 # Varying levels of max_episode_timesteps
 
+
 def test_env_start(default_cartseed):
     """
     Test initialization
     Test reset state
     """
     state = default_cartseed.reset()
-    print(f'Start state: {state}')
+    print(f"Start state: {state}")
     print(f"Environmental snaphot:\n {default_cartseed.seeds}")
     print(f"Number of bad seeds: {default_cartseed.bad_seed_count}")
     print(f"Max timesteps {default_cartseed.max_episode_timesteps()}")

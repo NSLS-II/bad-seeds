@@ -3,10 +3,19 @@ from tensorforce.environments import Environment
 
 
 class CartSeed(Environment):
-
-    def __init__(self, seed_count, *, bad_seed_count=None, max_count=10, frozen_order=False, sequential=False,
-                 revisiting=True, bad_seed_reward_f=None, good_seed_reward_f=None,
-                 measurement_time=None):
+    def __init__(
+        self,
+        seed_count,
+        *,
+        bad_seed_count=None,
+        max_count=10,
+        frozen_order=False,
+        sequential=False,
+        revisiting=True,
+        bad_seed_reward_f=None,
+        good_seed_reward_f=None,
+        measurement_time=None,
+    ):
         """
         Bad seeds, but make it cartpole...
 
@@ -171,14 +180,23 @@ class CartSeed(Environment):
         # Always scales the reward such that the optimal performance is 100
         # Does this for defaults as well as calculating optimal points for input functions
         if self.bad_seed_count > 0:
-            point_max = np.sum([self._bad_seed_reward_f([1, p], None, None) for p in range(self.max_count, 0, -1)]) * \
-                        self.bad_seed_count
-            self.bad_seed_reward_f = lambda s, t, a: self._bad_seed_reward_f(s, t, a) * 100 / point_max
+            point_max = (
+                np.sum(
+                    [
+                        self._bad_seed_reward_f([1, p], None, None)
+                        for p in range(self.max_count, 0, -1)
+                    ]
+                )
+                * self.bad_seed_count
+            )
+            self.bad_seed_reward_f = (
+                lambda s, t, a: self._bad_seed_reward_f(s, t, a) * 100 / point_max
+            )
         else:
             self.bad_seed_reward_f = self._bad_seed_reward_f
 
-        self.bad_seed_indicies = l[:self.bad_seed_count]
-        self.good_seed_indicies = l[self.bad_seed_count:]
+        self.bad_seed_indicies = l[: self.bad_seed_count]
+        self.good_seed_indicies = l[self.bad_seed_count :]
         self.seeds[self.bad_seed_indicies, :] = [1, self.max_count]
         self.seeds[self.good_seed_indicies, :] = [0, 0]
 
@@ -223,7 +241,9 @@ class CartSeed(Environment):
             # Otherwise random change that hasn't been visited
             else:
                 self.current_idx = self.rng.integers(self.seed_count)
-                while self.current_idx in self.visited or self.current_idx == prev_index:
+                while (
+                    self.current_idx in self.visited or self.current_idx == prev_index
+                ):
                     self.current_idx = self.rng.integers(self.seed_count)
         # Add to memory
         if not self.revisiting:
@@ -237,7 +257,10 @@ class CartSeed(Environment):
         else:
             terminal = False
 
-        if bool(self.seeds[self.current_idx, 0]) and self.seeds[self.current_idx, 1] > 0:
+        if (
+            bool(self.seeds[self.current_idx, 0])
+            and self.seeds[self.current_idx, 1] > 0
+        ):
             reward = self.bad_seed_reward(state, terminal, actions)
         else:
             reward = self.good_seed_reward(state, terminal, actions)
@@ -257,6 +280,7 @@ class CartSeedCountdown(CartSeed):
 
     See CartSeed for further details which are identical.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.total_max_count = self.max_count * self.bad_seed_count
@@ -269,9 +293,16 @@ class CartSeedCountdown(CartSeed):
         # Always scales the reward such that the optimal performance is 100
         # Does this for defaults as well as calculating optimal points for input functions
         if self.bad_seed_count > 0:
-            point_max = np.sum([self._bad_seed_reward_f(self.seeds[i, 1], None, None) * self.seeds[i, 1]
-                                for i in self.bad_seed_indicies])
-            self.bad_seed_reward_f = lambda s, t, a: self._bad_seed_reward_f(s, t, a) * 100 / point_max
+            point_max = np.sum(
+                [
+                    self._bad_seed_reward_f(self.seeds[i, 1], None, None)
+                    * self.seeds[i, 1]
+                    for i in self.bad_seed_indicies
+                ]
+            )
+            self.bad_seed_reward_f = (
+                lambda s, t, a: self._bad_seed_reward_f(s, t, a) * 100 / point_max
+            )
         else:
             self.bad_seed_reward_f = self._bad_seed_reward_f
 
@@ -338,7 +369,9 @@ class CartSeedCountdown(CartSeed):
             # Otherwise random change that hasn't been visited
             else:
                 self.current_idx = self.rng.integers(self.seed_count)
-                while self.current_idx in self.visited or self.current_idx == prev_index:
+                while (
+                    self.current_idx in self.visited or self.current_idx == prev_index
+                ):
                     self.current_idx = self.rng.integers(self.seed_count)
         # Add to memory
         if not self.revisiting:
@@ -365,7 +398,6 @@ class CartSeedCountdown(CartSeed):
 if __name__ == "__main__":
     np.set_printoptions(precision=3)
 
-
     def bad_seed_reward_f(state, *args):
         if state[1] >= 5:
             return 2
@@ -378,11 +410,11 @@ if __name__ == "__main__":
     environment = CartSeedCountdown(seed_count=3, bad_seed_count=1)
     env = Environment.create(environment=environment)
     state = env.reset()
-    print(f'Start state: {state}')
+    print(f"Start state: {state}")
     print(f"Environmental snaphot:\n {env.seeds}")
     print(f"Number of bad seeds: {env.bad_seed_count}")
     print(f"Max timesteps {env.max_episode_timesteps()}")
     for _ in range(4):
         a = True
         s, t, r = env.execute(a)
-        print(f'New seed state: {s}. New seed reward: {r}. Terminal: {t}')
+        print(f"New seed state: {s}. New seed reward: {r}. Terminal: {t}")

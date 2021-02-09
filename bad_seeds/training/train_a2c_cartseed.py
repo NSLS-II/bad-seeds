@@ -6,13 +6,15 @@ from bad_seeds.utils.tf_utils import tensorflow_settings
 from pathlib import Path
 
 
-def set_up(time_limit=50,
-           scoring=None,
-           gpu_idx=0,
-           batch_size=16,
-           env_version=1,
-           seed_count=10,
-           out_path=None):
+def set_up(
+    time_limit=50,
+    scoring=None,
+    gpu_idx=0,
+    batch_size=16,
+    env_version=1,
+    seed_count=10,
+    out_path=None,
+):
     """
     Set up a rushed CartSeed agent with less time than it needs to complete an episode.
     Parameters
@@ -63,12 +65,14 @@ def set_up(time_limit=50,
     def default(state, *args):
         return 1
 
-    func_dict = dict(tt2=tt2,
-                     tt5=tt5,
-                     monotonic=monotonic,
-                     linear=linear,
-                     square=square,
-                     default=default)
+    func_dict = dict(
+        tt2=tt2,
+        tt5=tt5,
+        monotonic=monotonic,
+        linear=linear,
+        square=square,
+        default=default,
+    )
 
     tensorflow_settings(gpu_idx)
     if out_path is None:
@@ -76,21 +80,25 @@ def set_up(time_limit=50,
     else:
         out_path = Path(out_path).expanduser().absolute()
     if env_version == 1:
-        environment = CartSeed(seed_count=seed_count,
-                               bad_seed_count=None,
-                               max_count=10,
-                               sequential=True,
-                               revisiting=True,
-                               bad_seed_reward_f=func_dict.get(scoring, None),
-                               measurement_time=time_limit)
+        environment = CartSeed(
+            seed_count=seed_count,
+            bad_seed_count=None,
+            max_count=10,
+            sequential=True,
+            revisiting=True,
+            bad_seed_reward_f=func_dict.get(scoring, None),
+            measurement_time=time_limit,
+        )
     elif env_version == 2:
-        environment = CartSeedCountdown(seed_count=seed_count,
-                                        bad_seed_count=None,
-                                        max_count=10,
-                                        sequential=True,
-                                        revisiting=True,
-                                        bad_seed_reward_f=func_dict.get(scoring, None),
-                                        measurement_time=time_limit)
+        environment = CartSeedCountdown(
+            seed_count=seed_count,
+            bad_seed_count=None,
+            max_count=10,
+            sequential=True,
+            revisiting=True,
+            bad_seed_reward_f=func_dict.get(scoring, None),
+            measurement_time=time_limit,
+        )
     else:
         raise NotImplementedError
     env = Environment.create(environment=environment)
@@ -99,8 +107,10 @@ def set_up(time_limit=50,
         batch_size=batch_size,
         environment=env,
         summarizer=dict(
-            directory=out_path / "training_data/a2c_cartseed/{}_{}_{}_{}".format(env_version, time_limit, scoring,
-                                                                                 batch_size),
+            directory=out_path
+            / "training_data/a2c_cartseed/{}_{}_{}_{}".format(
+                env_version, time_limit, scoring, batch_size
+            ),
             labels="all",
             frequency=1,
         ),
@@ -133,14 +143,16 @@ def manual_main():
         print(f"Episode reward: {episode_reward}. Episode length {episode_len}")
 
 
-def main(*,
-         time_limit=None,
-         scoring='default',
-         batch_size=16,
-         gpu_idx=0,
-         env_version=2,
-         out_path=None,
-         num_episodes=int(3 * 10 ** 3)):
+def main(
+    *,
+    time_limit=None,
+    scoring="default",
+    batch_size=16,
+    gpu_idx=0,
+    env_version=2,
+    out_path=None,
+    num_episodes=int(3 * 10 ** 3),
+):
     """
     A self contained set up of the environment and run.
     Can be used to create all of the figures associated in the reference for variable batch size and
@@ -168,12 +180,14 @@ def main(*,
     None
 
     """
-    env, agent = set_up(time_limit=time_limit,
-                        scoring=scoring,
-                        batch_size=batch_size,
-                        gpu_idx=gpu_idx,
-                        env_version=env_version,
-                        out_path=out_path)
+    env, agent = set_up(
+        time_limit=time_limit,
+        scoring=scoring,
+        batch_size=batch_size,
+        gpu_idx=gpu_idx,
+        env_version=env_version,
+        out_path=out_path,
+    )
     runner = Runner(agent=agent, environment=env)
     runner.run(num_episodes=num_episodes)
     if out_path is None:
