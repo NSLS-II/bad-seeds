@@ -1,8 +1,8 @@
-************************************************************************************************************************
+*********
 Bad Seeds
-************************************************************************************************************************
+*********
 Overview
-========================================================================================================================
+========
 Bad Seeds is a demonstration of using reinforcement learning for optimizing scientific operations when certain samples,
 the so-called ‘bad seeds’, can require significantly more measurement time to achieve the desired statistics.
 We construct an environment using the `tensorforce <https://github.com/tensorforce/tensorforce>`_ library to emulate
@@ -18,7 +18,7 @@ how to train a cartpole agent using bluesky and ophyd is presented in the
 
 
 Abstract
-************************************************************************************************************************
+********
 Beamline experiments at central facilities are increasingly demanding of remote, high-throughput, and adaptive operation conditions.
 To accommodate such needs, new approaches must be developed that enable on-the-fly decision making for data intensive challenges.
 Reinforcement learning (RL) is a domain of AI that holds the potential to enable autonomous operations in a feedback loop between beamline experiments and trained agents.
@@ -30,19 +30,19 @@ We interface these methods directly with the data storage and provenance technol
 
 
 System Requirements
-========================================================================================================================
+===================
 
 
 Hardware Requirements
-************************************************************************************************************************
+*********************
 While this work can be reproduced using the CPU for reinforcement learning agent training,
 it is strongly recommended to use a suitable CUDA enabled GPU for the training.
 
 Software Requirements
-************************************************************************************************************************
+*********************
 
 OS Requirements
-------------------------------------------------------------------------------------------------------------------------
+---------------
 This package has been tested exclusively on Linux operating systems containing CUDA enabled GPUs.
 
 - Ubuntu 18.04
@@ -63,7 +63,7 @@ scientific utilities::
 The version of tensorflow/tensorforce used only has wheels for py35-py38
 
 Getting Started
-========================================================================================================================
+===============
 
 Installation guide
 ******************
@@ -79,7 +79,7 @@ Install from github::
     $ python -m pip install .
 
 A simple demonstration
-************************************************************************************************************************
+**********************
 Example code of the training pipeline used in  the study is available in the `examples module <./bad_seeds/examples/>`_.
 
 One example is given to reproduce the data for comparing the impact of batch size on learning curves::
