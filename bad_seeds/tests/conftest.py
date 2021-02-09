@@ -11,10 +11,11 @@ def default_cartseed():
     -------
     Environment
     """
-    env = CartSeed(seed_count=10,
-                   bad_seed_count=3,
-                   frozen_order=True,
-                   )
+    env = CartSeed(
+        seed_count=10,
+        bad_seed_count=3,
+        frozen_order=True,
+    )
     env = Environment.create(environment=env)
     return env
 
@@ -27,10 +28,11 @@ def default_cartseedcountdown():
     -------
     Environment
     """
-    env = CartSeedCountdown(seed_count=10,
-                            bad_seed_count=3,
-                            frozen_order=True,
-                            )
+    env = CartSeedCountdown(
+        seed_count=10,
+        bad_seed_count=3,
+        frozen_order=True,
+    )
     env = Environment.create(environment=env)
     return env
 
@@ -38,4 +40,5 @@ def default_cartseedcountdown():
 @pytest.fixture
 def default_setup():
     from bad_seeds.training.train_a2c_cartseed import set_up
+
     return set_up()

@@ -20,57 +20,66 @@ This may be due to an out-of-date pip. Make sure you have pip >= 9.0.1.
 Upgrade pip like so:
 
 pip install --upgrade pip
-""".format(*(sys.version_info[:2] + min_version))
+""".format(
+        *(sys.version_info[:2] + min_version)
+    )
     sys.exit(error)
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'README.rst'), encoding='utf-8') as readme_file:
+with open(path.join(here, "README.rst"), encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
-with open(path.join(here, 'requirements.txt')) as requirements_file:
+with open(path.join(here, "requirements.txt")) as requirements_file:
     # Parse requirements.txt, ignoring any commented-out lines.
-    requirements = [line for line in requirements_file.read().splitlines()
-                    if not line.startswith('#')]
+    requirements = [
+        line
+        for line in requirements_file.read().splitlines()
+        if not line.startswith("#")
+    ]
 try:
-    num_gpus = len(check_output(['nvidia-smi', '--query-gpu=gpu_name',
-                                 '--format=csv'], shell=True).decode().strip().split('\n'))
-    tf = 'tensorflow-gpu==2.2.0' if num_gpus > 1 else 'tensorflow==2.2.0'
+    num_gpus = len(
+        check_output(["nvidia-smi", "--query-gpu=gpu_name", "--format=csv"], shell=True)
+        .decode()
+        .strip()
+        .split("\n")
+    )
+    tf = "tensorflow-gpu==2.2.0" if num_gpus > 1 else "tensorflow==2.2.0"
 except CalledProcessError:
-    tf = 'tensorflow==2.2.0'
+    tf = "tensorflow==2.2.0"
 
 requirements = [tf] + requirements
 
 setup(
-    name='bad_seeds',
+    name="bad_seeds",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="Learn to efficiently measure samples at a beamline.",
     long_description=readme,
     author="Brookhaven National Lab",
-    author_email='',
-    url='https://github.com/bnl/pub-Maffettone_2020_MLST',
-    python_requires='>={}'.format('.'.join(str(n) for n in min_version)),
-    packages=find_packages(exclude=['docs', 'tests']),
+    author_email="",
+    url="https://github.com/bnl/pub-Maffettone_2020_MLST",
+    python_requires=">={}".format(".".join(str(n) for n in min_version)),
+    packages=find_packages(exclude=["docs", "tests"]),
     entry_points={
-        'console_scripts': [
+        "console_scripts": [
             # 'command = some.module:some_function',
         ],
     },
     include_package_data=True,
     package_data={
-        'bad_seeds': [
+        "bad_seeds": [
             # When adding files here, remember to update MANIFEST.in as well,
             # or else they will not be included in the distribution on PyPI!
             # 'path/to/data_file',
-            'published_results/*.csv'
+            "published_results/*.csv"
         ]
     },
     install_requires=requirements,
     license="BSD (3-clause)",
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3',
+        "Development Status :: 2 - Pre-Alpha",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3",
     ],
 )
