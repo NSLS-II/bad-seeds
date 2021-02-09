@@ -113,20 +113,74 @@ def plot_timelimit_learning(df, timelimit, *, ax, label_loc="baseline", **kwargs
         weight="bold",
         **kwargs,
     )
-    ax = general_axis_adjustments(ax, np.max(df.step))
-    return ln, axline, ann, ax
+    return ln, axline, ann
 
 
 def plot_all_timelimit(
+    data_path,
     timelimits,
     ax,
     *,
     l_alpha=0.9,
-    data_path=Path("../published_results"),
     score="default",
     batch_size=512,
 ):
-    """Make the time-limited figure
+    """Make the time-limited panel
+
+    This expect that there will be CSV files in data_path with names ::
+
+       batch_{batch_size}.csv
+
+    Parameters
+    ----------
+    data_path : Path, optional
+        The location of the data files
+    timelimits : List[int]
+        The timelimits of the data to be plotted.
+    ax : matplotlib.axes.Axes
+        The axes to plot to
+    l_alpha : float [0, 1], optional
+        The alpha ot use drawing the lines
+    score : str, optional
+        The scoring mode used.  Second value in name template.
+    batch_size : int, optional
+        The training batch size.  Third value in name template.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+    """
+
+    cmap = plt.get_cmap("Dark2")
+    max_step = -1
+    plotted_data = {}
+    for j, timelimit in enumerate(sorted(timelimits, reverse=True)):
+        path = data_path / Path(f"{timelimit}_{score}_{batch_size}.csv")
+        df = pd.read_csv(str(path))
+        key = (timelimit, score, batch_size)
+        plotted_data[key] = plot_timelimit_learning(
+            df, timelimit, ax=ax, alpha=l_alpha, color=cmap(j)
+        )
+        max_step = max(max_step, np.max(df.step))
+
+    ax.legend(
+        handles=(
+            plt.Line2D([], [], color="k", ls="--", label="Sequential", alpha=l_alpha),
+            plt.Line2D([], [], color="k", ls="-", label="Agent", alpha=l_alpha),
+        ),
+        bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
+        loc=3,
+        ncol=3,
+        mode="expand",
+        borderaxespad=0.0,
+        frameon=False,
+    )
+    ax = general_axis_adjustments(ax, max_step)
+    return plotted_data
+
+
+def plot_all_ideal(batch_sizes, ax, l_alpha=0.9, *, vmin=1, vmax=512, data_path):
+    """Make the time-limited panel
 
     This expect that there will be CSV files in data_path with names ::
 
@@ -151,66 +205,38 @@ def plot_all_timelimit(
 
     Returns
     -------
-    ax : matplotlib.axes.Axes
+    plotted_data : Dict[int, Line2D]
+    ideal_p : Line2D
+    seq_p : Line2D
+    cbar : ColorBar
     """
 
-    cmap = plt.get_cmap("Dark2")
-
-    plotted_data = []
-    for j, timelimit in enumerate(sorted(timelimits, reverse=True)):
-        path = data_path / Path(f"{timelimit}_{score}_{batch_size}.csv")
-        df = pd.read_csv(str(path))
-        plotted_data.append(
-            plot_timelimit_learning(df, timelimit, ax=ax, alpha=l_alpha, color=cmap(j))
-        )
-
-    ax.legend(
-        handles=(
-            plt.Line2D([], [], color="k", ls="--", label="Sequential", alpha=l_alpha),
-            plt.Line2D([], [], color="k", ls="-", label="Agent", alpha=l_alpha),
-        ),
-        bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
-        loc=3,
-        ncol=3,
-        mode="expand",
-        borderaxespad=0.0,
-        frameon=False,
-    )
-    return ax
-
-
-def plot_ideal_learning(batch_size, ax=None, **kwargs):
-    if ax is None:
-        fig, ax = plt.subplots()
-    path = Path("../published_results") / Path(f"batch_{batch_size}.csv")
-    df = pd.read_csv(str(path))
-    ax.plot(
-        df.step, smooth(df.val, 0.997), label=f"Batch size = {batch_size}", **kwargs
-    )
-    ax = general_axis_adjustments(ax, np.max(df.step))
-
-
-def plot_all_ideal(batch_sizes=None, ax=None, l_alpha=0.9):
-    if ax is None:
-        fig, ax = plt.subplots()
-    if batch_sizes is None:
-        batch_sizes = [1, 8, 16, 32, 64, 128, 256, 512]
-    norm = mpl.colors.LogNorm(vmin=1, vmax=512)
+    norm = mpl.colors.LogNorm(vmin=vmin, vmax=vmax)
     cmap = mpl.colors.LinearSegmentedColormap.from_list(
         "Dan hates Yellow", plt.get_cmap("viridis_r")(np.linspace(0.2, 1, 256))
     )
     sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
 
+    plotted_data = {}
+    max_step = -1
     for batch_size in batch_sizes:
-        plot_ideal_learning(
-            batch_size, ax=ax, alpha=l_alpha, color=cmap(norm(batch_size))
+        path = data_path / Path(f"batch_{batch_size}.csv")
+        df = pd.read_csv(str(path))
+
+        (plotted_data[batch_size],) = ax.plot(
+            df.step,
+            smooth(df.val, 0.997),
+            alpha=l_alpha,
+            color=cmap(norm(batch_size)),
+            label=f"Batch size = {batch_size}",
         )
+        max_step = max(max_step, np.max(df.step))
 
     ideal_p = ax.axhline(90, color="k", ls=":", label="Ideal")
     seq_score = 90 * np.mean([i / 10 for i in range(1, 11)])
     seq_p = ax.axhline(seq_score, color="k", ls="--", label="Sequential")
 
-    ax.figure.colorbar(sm, ax=ax, label="Batch Size")
+    cbar = ax.figure.colorbar(sm, ax=ax, label="Batch Size")
     ax.legend(
         handles=(
             ideal_p,
@@ -224,47 +250,71 @@ def plot_all_ideal(batch_sizes=None, ax=None, l_alpha=0.9):
         borderaxespad=0.0,
         frameon=False,
     )
-    # TODO Add sequential policy expectation value
-    # Legend
-    # ax.legend(bbox_to_anchor=(.01, 1.11), loc='upper left', ncol=3)
-    return ax
+    ax = general_axis_adjustments(ax, np.max(df.step))
+    return plotted_data, ideal_p, seq_p, cbar
 
 
-# ## Defaults for everything
+def make_figure(
+    data_path=Path("published_results"),
+    *,
+    figsize=(8.5 / 2.54, 5),
+    out_file=None,
+    batch_sizes=(32, 64, 128, 512),
+    ideal_kwargs=None,
+    timelimits=(10, 30, 70, 100),
+    timelimited_kwargs=None,
+):
+    """Generates Figure N from the paper.
 
-# In[13]:
+    Parameters
+    ----------
+    data_path : Path
+        The folder to find the data files in.
 
+        This expect that there will be CSV files in data_path with names ::
 
-def make_figure_1(figsize=(8.5 / 2.54, 5), out_file="all.png"):
-    mpl.rcParams["font.size"] = 7
+           {timelimit}_{score}_{batch_size}.csv
+
+        for the timelimited data and ::
+
+           batch_{batch_size}.csv
+
+        for the ideal data.
+
+    figsize : (float, float), optional
+    out_file : Path, optional
+        If not None, save the figure.
+    batch_sizes : Tuple[int], optional
+        The batches sizes to plot in the top panel
+    ideal_kwargs : dict, optional
+        Any other kwargs to pass through to `plot_all_ideal`
+    timelimits : Tuple[int], optional
+        The timelimits to use for the bottom panel.
+    timelimited_kwargs : dict, optional
+        Any other kwargs to pass through to `plot_all_timelimit`
+
+    """
     with mpl.rc_context({"font.size": 7}):
-        fig, axes = plt.subplots(2, 1, figsize=figsize, constrained_layout=True)
-        plot_all_timelimit(ax=axes[1], timelimits=[10, 20, 30, 40, 50, 70, 100])
-        plot_all_ideal(ax=axes[0])
+        fig, (axes_ideal, axes_timelimited) = plt.subplots(
+            2, 1, figsize=figsize, constrained_layout=True
+        )
+        arts_ideal = plot_all_ideal(
+            ax=axes_ideal,
+            data_path=data_path,
+            batch_sizes=batch_sizes,
+            **(ideal_kwargs or {}),
+        )
+        arts_timelimited = plot_all_timelimit(
+            ax=axes_timelimited,
+            data_path=data_path,
+            timelimits=timelimits,
+            **(timelimited_kwargs or {}),
+        )
+    if out_file is not None:
         fig.savefig(out_file, dpi=300)
-        return fig, axes
 
-
-# ## PMM Suggestions
-# Preferring the one with 4, even though the blue line is somewhat confusing. Clarification in the text.
-
-# In[7]:
-
-
-def make_figure_2(figsize=(8.5 / 2.54, 5), out_file="pmm_option.png"):
-    mpl.rcParams["font.size"] = 7
-    with mpl.rc_context({"font.size": 7}):
-        fig, axes = plt.subplots(2, 1, figsize=figsize, constrained_layout=True)
-        plot_all_timelimit(timelimits=[10, 30, 70, 100], ax=axes[1])
-        plot_all_ideal(batch_sizes=[32, 64, 128, 512], ax=axes[0])
-        fig.savefig(out_file, dpi=300)
-
-
-# In[8]:
-
-
-def make_figure_3(figsize=(8.5 / 2.54, 5)):
-    with mpl.rc_context({"font.size": 7}):
-        fig, axes = plt.subplots(2, 1, figsize=figsize, constrained_layout=True)
-        plot_all_timelimit(timelimits=[10, 30, 70], ax=axes[1])
-        plot_all_ideal(batch_sizes=[32, 64, 512], ax=axes[0])
+    return (
+        fig,
+        {"ideal": axes_ideal, "timelimited": axes_timelimited},
+        {"ideal": arts_ideal, "timelimited": arts_timelimited},
+    )

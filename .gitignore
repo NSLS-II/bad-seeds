@@ -2,6 +2,9 @@ data/*
 notebooks/training_data/*
 saved_models/*
 training_data/*
+example_results/*
+
+*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
