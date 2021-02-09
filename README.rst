@@ -49,14 +49,18 @@ This package has been tested exclusively on Linux operating systems containing C
 - PopOS 20.04
 
 Python dependencies
-------------------------------------------------------------------------------------------------------------------------
-This package mainly depends on the ``tensorboard`` RL stack and some scientific utilities::
+-------------------
+
+This package mainly depends on the ``tensorboard`` RL stack and some
+scientific utilities::
 
     tensorboard
-    tensorflow
+    tensorforce
     numpy
     matplotlib
     pandas
+
+The version of tensorflow/tensorforce used only has wheels for py35-py38
 
 Getting Started
 ========================================================================================================================
