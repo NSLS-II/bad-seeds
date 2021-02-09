@@ -109,4 +109,16 @@ In both cases the default is to do a ``simple`` experiment for the sake of demon
 If ``simple=False`` is set in the main, a more complete (and more expensive!) experiment will be run which will converge
 to similiar results presented in the `published data folder <./published_results>`_.
 
-Matplotlib functions to cast this data as seen in the paper are presented in the `plot module <./bad_seeds/plot/>`_.
+Matplotlib functions to cast this data as seen in the paper are presented in the `plot module <./bad_seeds/plot/gen_figs.py>`_.
+
+To generate Figures 7 and 8 from the paper ::
+
+   $ python bad_seeds/examples/paper_figures.py  --show
+   wrote /home/tcaswell/source/bnl/nsls-ii/bad-seeds/figure_7.png
+   wrote /home/tcaswell/source/bnl/nsls-ii/bad-seeds/figure_8.png
+
+or their equivalents on locally generated results ::
+
+   $ python bad_seeds/examples/example_figures.py --show
+   wrote /home/tcaswell/source/bnl/nsls-ii/bad-seeds/ideal_training.png
+   wrote /home/tcaswell/source/bnl/nsls-ii/bad-seeds/time_constrained_16.png
