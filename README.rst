@@ -51,11 +51,12 @@ This package has been tested exclusively on Linux operating systems containing C
 Python dependencies
 -------------------
 
-This package mainly depends on the ``tensorboard`` RL stack and some
+This package mainly depends on the ``tensorforce`` RL stack and some
 scientific utilities::
 
-    tensorboard
     tensorforce
+    tensorboard
+    tensorflow
     numpy
     matplotlib
     pandas
