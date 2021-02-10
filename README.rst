@@ -73,8 +73,8 @@ Install from github::
 
     $ python3 -m venv bs_env
     $ source bs_env/bin/activate
-    $ git clone https://github.com/bnl/pub-Maffettone_2020_MLST
-    $ cd pub-Maffettone_2020_MLST
+    $ git clone https://github.com/bnl/pub-Maffettone_2020_02
+    $ cd pub-Maffettone_2020_02
     $ python -m pip install --upgrade pip wheel
     $ python -m pip install .
 
