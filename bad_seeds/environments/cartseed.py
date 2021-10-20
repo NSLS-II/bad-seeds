@@ -395,26 +395,208 @@ class CartSeedCountdown(CartSeed):
         return state, terminal, reward
 
 
+class CartSeedMutliTier(Environment):
+    def __init__(
+        self,
+        seed_count,
+        *,
+        n_states=2,
+        scans_per_state=1,
+        measurement_time=None,
+        minimum_score=1.0,
+        rng_seed=None,
+    ):
+        """
+        Samples should produce maximal reward on first measurement.
+        Then there will be n_tiers of goodness with proportionate rewards such that
+        one measurement in on one sample in a tier produces the same reward as measuring
+        all samples in the next tier.
+
+        By this notion, measuring one 'good' sample once, is more valuable than
+        measuring all of the other 'good' samples twice.
+
+        Each seed will be tracked as [baseline quality, current quality, measurement count].
+
+        Note: countdown as high as number of tiers * scans per state
+
+        Parameters
+        ----------
+        seed_count: int
+            Number of seeds (aka number of samples in measurement bracket)
+        n_states: int
+            Number of tiers of goodness, not including 'unmeasured' as a default state
+        scans_per_state: int
+            Number of scans/measurements required to transition to a better state.
+        measurement_time: int, None
+            Override for max_episode_timesteps in Environment.create().
+            Passing a value of max_episode_timesteps to Environment.create() will override measurement_time and the
+            default max_episode_timesteps(), raising an UnexpectedError if the override value is greater than the others.
+        minimum_score: float
+            Score assinged to baseline measurement of best quality seed/sample.
+            Must be greater than zero, and can be set to a small value for the sake of scaling back
+            the scores of many states and/or many seeds.
+        rng_seed: None, int
+            Random number generator seed
+        """
+        super().__init__()
+        self.n_states = n_states + 1  # Add 1 for the unmeasured state
+        self.measurement_time = measurement_time
+        self.seed_count = seed_count
+        self.minimum_score = minimum_score
+        self.scans_per_state = scans_per_state
+
+        self.timestep = 0
+        self.seeds = np.empty((self.seed_count, 3))
+        self.current_idx = None
+        self.exp_sequence = []
+
+        self.rng = np.random.default_rng(rng_seed)
+
+    def states(self):
+        """
+        State is current sample tier.
+        [0 - not measured
+         1 - bad
+         2 - better
+         3 - more better
+         ...
+         n - good
+        ]
+        Returns
+        -------
+        state specification
+
+        """
+        return dict(type="int", num_states=self.n_states)
+
+    def actions(self):
+        """
+        Actions specification: Stay or go
+        Returns
+        -------
+        Action spec
+        """
+        return dict(type="int", num_values=2)
+
+    def max_episode_timesteps(self):
+        """
+        Returns
+        -------
+        max_episode_timesteps: int
+            Is overridden by the use inclusion of max_episode_timesteps in Environment.create() kwargs.
+            (This uses a hidden variable from tensorforce.Environment)
+        """
+        if self.measurement_time is None:
+            return np.sum(self.seeds[:, 0] * self.scans_per_state + self.seed_count)
+        else:
+            return self.measurement_time
+
+    def reset(self):
+        """
+        Set up seeds array and indicies.
+        Each seed is randomly assigned
+        Moves current index back to start
+
+        Returns
+        -------
+        state
+        """
+        self.seeds[:, 0] = self.rng.integers(1, self.n_states, size=self.seed_count)
+        self.seeds[:, 1] = 0
+        self.seeds[:, 2] = 0.0
+        self.current_idx = 0
+
+        state = self.seeds[self.current_idx, 1]
+        return state
+
+    def _progress_state(self, idx):
+        """
+        Progresses a seed state by updating its count and current state
+        3 member seed [baseline, current, count]
+        Parameters
+        ----------
+        idx: int
+
+        Returns
+        -------
+
+        """
+        # This works because every count starts at 0, and every current starts at 0
+        self.seeds[idx, 2] += 1
+        self.seeds[idx, 1] = min(
+            self.n_states - 1,
+            self.seeds[idx, 0]
+            + np.floor((self.seeds[idx, 2] - 1) / self.scans_per_state),
+        )
+
+    def execute(self, action):
+        """
+        Updates timestep
+        Updates state
+        Movement here continually cycles seed, and does away with experimental movement of
+        CartSeed and CartSeedCountdown
+        Updates overall seed tracking (countdown)
+        Calculates reward based on current seed
+
+        Parameters
+        ----------
+        action: bool
+
+        Returns
+        -------
+        next_state: array
+        terminal: bool
+        reward: float
+
+        """
+        self.timestep += 1
+        move = bool(action)
+        if move:
+            self.current_idx = (self.current_idx + 1) % self.seed_count
+
+        self.exp_sequence.append(self.current_idx)
+        # Calculate reward
+        state = self.seeds[self.current_idx, 1]
+        reward = self.minimum_score * self.seed_count ** (self.n_states - state - 1)
+        # Update state and environment
+        self._progress_state(self.current_idx)
+        state = self.seeds[self.current_idx, 1]
+
+        if self.timestep >= self.max_episode_timesteps():
+            terminal = True
+        else:
+            terminal = False
+
+        return state, terminal, reward
+
+
 if __name__ == "__main__":
     np.set_printoptions(precision=3)
 
-    def bad_seed_reward_f(state, *args):
-        if state[1] >= 5:
-            return 2
-        else:
-            return 1
-        # return float(state[1]>0) * state[1]
-
-    # environment = CartSeed01(seed_count=3, bad_seed_count=1, sequential=True, revisiting=False,
-    #                          bad_seed_reward_f=bad_seed_reward_f, measurement_time=50)
-    environment = CartSeedCountdown(seed_count=3, bad_seed_count=1)
+    environment = CartSeedMutliTier(
+        seed_count=3, n_states=3, scans_per_state=2, measurement_time=None, rng_seed=12
+    )
     env = Environment.create(environment=environment)
     state = env.reset()
     print(f"Start state: {state}")
     print(f"Environmental snaphot:\n {env.seeds}")
-    print(f"Number of bad seeds: {env.bad_seed_count}")
     print(f"Max timesteps {env.max_episode_timesteps()}")
-    for _ in range(4):
-        a = True
+    for a in [
+        False,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        True,
+        False,
+        True,
+        False,
+        False,
+    ]:
         s, t, r = env.execute(a)
-        print(f"New seed state: {s}. New seed reward: {r}. Terminal: {t}")
+        print(
+            f"New seed: {env.current_idx} State: {s}. New seed reward: {r}. Terminal: {t}"
+        )
+        print(f"Snapshot: {env.seeds}")

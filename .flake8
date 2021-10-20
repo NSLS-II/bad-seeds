@@ -7,4 +7,5 @@ exclude =
     versioneer.py,
     bad_seeds/_version.py,
     docs/source/conf.py
-max-line-length = 115
+max-line-length = 121
+ignore = E203, E741, W503
