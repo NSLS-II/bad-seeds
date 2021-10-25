@@ -467,7 +467,7 @@ class CartSeedMutliTier(Environment):
         state specification
 
         """
-        return dict(type="int", num_states=self.n_states)
+        return dict(type="int", num_values=self.n_states, shape=1)
 
     def actions(self):
         """
@@ -506,7 +506,7 @@ class CartSeedMutliTier(Environment):
         self.seeds[:, 2] = 0.0
         self.current_idx = 0
 
-        state = self.seeds[self.current_idx, 1]
+        state = self.seeds[self.current_idx, 1:2]  # slicing for shape array not scalar
         return state
 
     def _progress_state(self, idx):
@@ -560,7 +560,7 @@ class CartSeedMutliTier(Environment):
         reward = self.minimum_score * self.seed_count ** (self.n_states - state - 1)
         # Update state and environment
         self._progress_state(self.current_idx)
-        state = self.seeds[self.current_idx, 1]
+        state = self.seeds[self.current_idx, 1:2]  # Slicing for shaped array not scalar
 
         if self.timestep >= self.max_episode_timesteps():
             terminal = True
