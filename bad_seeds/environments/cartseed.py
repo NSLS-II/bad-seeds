@@ -530,7 +530,7 @@ class CartSeedMutliTier(Environment):
             + np.floor((self.seeds[idx, 2] - 1) / self.scans_per_state),
         )
 
-    def execute(self, action):
+    def execute(self, actions):
         """
         Updates timestep
         Updates state
@@ -541,7 +541,7 @@ class CartSeedMutliTier(Environment):
 
         Parameters
         ----------
-        action: bool
+        actions: bool
 
         Returns
         -------
@@ -552,7 +552,7 @@ class CartSeedMutliTier(Environment):
         """
         # TODO: Consider reward only on conversion
         self.timestep += 1
-        move = bool(action)
+        move = bool(actions)
         if move:
             self.current_idx = (self.current_idx + 1) % self.seed_count
 
