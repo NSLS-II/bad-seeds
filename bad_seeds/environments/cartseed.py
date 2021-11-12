@@ -501,6 +501,7 @@ class CartSeedMutliTier(Environment):
         -------
         state
         """
+        self.timestep = 0
         self.seeds[:, 0] = self.rng.integers(1, self.n_states, size=self.seed_count)
         self.seeds[:, 1] = 0
         self.seeds[:, 2] = 0.0
@@ -549,6 +550,7 @@ class CartSeedMutliTier(Environment):
         reward: float
 
         """
+        # TODO: Consider reward only on conversion
         self.timestep += 1
         move = bool(action)
         if move:
