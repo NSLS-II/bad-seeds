@@ -449,6 +449,7 @@ class CartSeedMutliTier(Environment):
         self.seeds = np.empty((self.seed_count, 3))
         self.current_idx = None
         self.exp_sequence = []
+        self.perfect_score = 0.0  # What would an ideal episode produce
 
         self.rng = np.random.default_rng(rng_seed)
 
@@ -487,7 +488,10 @@ class CartSeedMutliTier(Environment):
             (This uses a hidden variable from tensorforce.Environment)
         """
         if self.measurement_time is None:
-            return np.sum(self.seeds[:, 0] * self.scans_per_state + self.seed_count)
+            return (
+                np.sum((self.n_states - 1 - self.seeds[:, 0]) * self.scans_per_state)
+                + self.seed_count
+            )
         else:
             return self.measurement_time
 
@@ -507,12 +511,29 @@ class CartSeedMutliTier(Environment):
         self.seeds[:, 2] = 0.0
         self.current_idx = 0
 
+        # Calculate perfect score for this episode. Used to normalize on 0--100
+        # Calculate ideal
+        self.perfect_score = 0.0
+        for seed in self.seeds:
+            seed_score = self.minimum_score * self.seed_count ** (
+                self.n_states - 1
+            )  # Score for initial measurement
+            for state_i in range(
+                int(seed[0]), self.n_states - 1
+            ):  # from baseline to number of states
+                seed_score += (
+                    self.minimum_score
+                    * self.seed_count ** (self.n_states - state_i - 1)
+                ) * self.scans_per_state
+            self.perfect_score += seed_score
+
         state = self.seeds[self.current_idx, 1:2]  # slicing for shape array not scalar
         return state
 
     def _progress_state(self, idx):
         """
-        Progresses a seed state by updating its count and current state
+        Progresses a seed state by updating its count and current state.
+        Only called after initial measurement
         3 member seed [baseline, current, count]
         Parameters
         ----------
@@ -522,12 +543,14 @@ class CartSeedMutliTier(Environment):
         -------
 
         """
-        # This works because every count starts at 0, and every current starts at 0
-        self.seeds[idx, 2] += 1
+        # This works because every count starts at 0, and every current starts at 0.
+        self.seeds[idx, 2] += 1  # Increase count
         self.seeds[idx, 1] = min(
-            self.n_states - 1,
+            self.n_states - 1,  # Best possible state
             self.seeds[idx, 0]
-            + np.floor((self.seeds[idx, 2] - 1) / self.scans_per_state),
+            + np.floor(
+                (self.seeds[idx, 2] - 1) / self.scans_per_state
+            ),  # Baseline State plus integer amount of advacement
         )
 
     def execute(self, actions):
@@ -559,7 +582,11 @@ class CartSeedMutliTier(Environment):
         self.exp_sequence.append(self.current_idx)
         # Calculate reward
         state = self.seeds[self.current_idx, 1]
-        reward = self.minimum_score * self.seed_count ** (self.n_states - state - 1)
+        reward = (
+            (self.minimum_score * self.seed_count ** (self.n_states - state - 1))
+            / self.perfect_score
+            * 100
+        )
         # Update state and environment
         self._progress_state(self.current_idx)
         state = self.seeds[self.current_idx, 1:2]  # Slicing for shaped array not scalar
