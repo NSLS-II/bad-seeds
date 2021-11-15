@@ -14,6 +14,7 @@ def set_up(
     seed_count=10,
     n_states=2,
     out_path=None,
+    **kwargs,
 ):
     tensorflow_settings(gpu_idx)
     if out_path is None:
@@ -23,10 +24,9 @@ def set_up(
     environment = CartSeedMutliTier(
         seed_count=seed_count,
         n_states=n_states,
-        scans_per_state=1,
         measurement_time=time_limit,
-        minimum_score=1.0,
         rng_seed=None,
+        **kwargs,
     )
     env = Environment.create(environment=environment)
     agent = Agent.create(
@@ -34,8 +34,10 @@ def set_up(
         batch_size=batch_size,
         environment=env,
         summarizer=dict(
-            directory=out_path
-            / f"training_data/a2c_multitier/{seed_count}_{n_states}_{batch_size}_{time_limit}",
+            directory=out_path / f"training_data/a2c_multitier/"
+            f"{seed_count}seed_{n_states}state_bs{batch_size}_time{time_limit}_"
+            f"difficulty{kwargs.get('scans_per_state', (1,1))}_"
+            f"{kwargs.get('scoring_mode', 'measurement')}Score",
             labels=[
                 "entropy",
                 "kl-divergence",
@@ -58,6 +60,7 @@ def _manual_main(
     n_states=2,
     out_path=None,
     num_episodes=int(3 * 10 ** 3),
+    **kwargs,
 ):
     """Manual lop for debugging purposes"""
     env, agent = set_up(
@@ -67,6 +70,7 @@ def _manual_main(
         seed_count=seed_count,
         n_states=n_states,
         out_path=out_path,
+        **kwargs,
     )
 
     for i in range(num_episodes):
@@ -95,6 +99,7 @@ def main(
     n_states=2,
     out_path=None,
     num_episodes=int(3 * 10 ** 3),
+    **kwargs,
 ):
     """
     A self contained set up of the environment and run.
@@ -117,6 +122,8 @@ def main(
         Top level dir for output of models and checkpoints
     num_episodes: int
         Number of episodes to learn over
+    kwargs: dict
+        Keyword arguments for initializing environment
 
     Returns
     -------
@@ -130,6 +137,7 @@ def main(
         seed_count=seed_count,
         n_states=n_states,
         out_path=out_path,
+        **kwargs,
     )
 
     runner = Runner(agent=agent, environment=env)
@@ -145,4 +153,10 @@ def main(
 
 
 if __name__ == "__main__":
-    agent = main(num_episodes=2000, n_states=3)
+    main(
+        num_episodes=250,
+        n_states=3,
+        batch_size=1,
+        scans_per_state=(1, 10),
+        scoring_mode="conversion",
+    )
