@@ -405,6 +405,7 @@ class CartSeedMutliTier(Environment):
         measurement_time=None,
         minimum_score=1.0,
         rng_seed=None,
+        scoring_mode="measurement",
     ):
         """
         Samples should produce maximal reward on first measurement.
@@ -425,8 +426,11 @@ class CartSeedMutliTier(Environment):
             Number of seeds (aka number of samples in measurement bracket)
         n_states: int
             Number of tiers of goodness, not including 'unmeasured' as a default state
-        scans_per_state: int
+        scans_per_state: int, tuple of int
             Number of scans/measurements required to transition to a better state.
+            Default 1.
+            If a tuple is passed, it must be length 2 containing a min/max integer for varying scans_per_state.
+            In the variable context, each seed is randomly assigned it's own `scans_per_state` on reset
         measurement_time: int, None
             Override for max_episode_timesteps in Environment.create().
             Passing a value of max_episode_timesteps to Environment.create() will override measurement_time and the
@@ -437,13 +441,22 @@ class CartSeedMutliTier(Environment):
             the scores of many states and/or many seeds.
         rng_seed: None, int
             Random number generator seed
+        scoring_mode: str
+            One of {"measurement", "conversion"} for awarding points on measurement or on conversion.
         """
         super().__init__()
+        self.rng = np.random.default_rng(rng_seed)
         self.n_states = n_states + 1  # Add 1 for the unmeasured state
         self.measurement_time = measurement_time
         self.seed_count = seed_count
         self.minimum_score = minimum_score
-        self.scans_per_state = scans_per_state
+        if isinstance(scans_per_state, int):
+            self.scans_per_state_bounds = (scans_per_state, scans_per_state)
+        else:
+            self.scans_per_state_bounds = tuple(scans_per_state)
+        self.scans_per_state = self.rng.integers(
+            *self.scans_per_state_bounds, size=seed_count, endpoint=True
+        )
 
         self.timestep = 0
         self.seeds = np.empty((self.seed_count, 3))
@@ -451,7 +464,9 @@ class CartSeedMutliTier(Environment):
         self.exp_sequence = []
         self.perfect_score = 0.0  # What would an ideal episode produce
 
-        self.rng = np.random.default_rng(rng_seed)
+        self.reward_measurement = {"measurement": True, "conversion": False}[
+            scoring_mode
+        ]
 
     def states(self):
         """
@@ -510,21 +525,36 @@ class CartSeedMutliTier(Environment):
         self.seeds[:, 1] = 0
         self.seeds[:, 2] = 0.0
         self.current_idx = 0
+        self.scans_per_state = self.rng.integers(
+            *self.scans_per_state_bounds, size=self.seed_count, endpoint=True
+        )
 
         # Calculate perfect score for this episode. Used to normalize on 0--100
         # Calculate ideal
         self.perfect_score = 0.0
-        for seed in self.seeds:
-            seed_score = self.minimum_score * self.seed_count ** (
-                self.n_states - 1
-            )  # Score for initial measurement
-            for state_i in range(
-                int(seed[0]), self.n_states - 1
-            ):  # from baseline to number of states
-                seed_score += (
-                    self.minimum_score
-                    * self.seed_count ** (self.n_states - state_i - 1)
-                ) * self.scans_per_state
+        for idx, seed in enumerate(self.seeds):
+            if self.reward_measurement:
+                seed_score = self.minimum_score * self.seed_count ** (
+                    self.n_states - 1
+                )  # Score for initial measurement
+                for state_i in range(
+                    int(seed[0]), self.n_states - 1
+                ):  # from baseline to number of states
+                    seed_score += (
+                        self.minimum_score
+                        * self.seed_count ** (self.n_states - state_i - 1)
+                    ) * self.scans_per_state[idx]
+            else:  # reward only conversion based on previous state, not current state
+                seed_score = self.minimum_score * self.seed_count ** (
+                    self.n_states - 2
+                )  # Score for initial conversion
+                for state_i in range(
+                    int(seed[0]), self.n_states - 1
+                ):  # from baseline to number of states
+                    seed_score += self.minimum_score * self.seed_count ** (
+                        self.n_states - state_i - 2
+                    )
+
             self.perfect_score += seed_score
 
         state = self.seeds[self.current_idx, 1:2]  # slicing for shape array not scalar
@@ -549,7 +579,7 @@ class CartSeedMutliTier(Environment):
             self.n_states - 1,  # Best possible state
             self.seeds[idx, 0]
             + np.floor(
-                (self.seeds[idx, 2] - 1) / self.scans_per_state
+                (self.seeds[idx, 2] - 1) / self.scans_per_state[idx]
             ),  # Baseline State plus integer amount of advacement
         )
 
@@ -573,7 +603,6 @@ class CartSeedMutliTier(Environment):
         reward: float
 
         """
-        # TODO: Consider reward only on conversion
         self.timestep += 1
         move = bool(actions)
         if move:
@@ -582,14 +611,35 @@ class CartSeedMutliTier(Environment):
         self.exp_sequence.append(self.current_idx)
         # Calculate reward
         state = self.seeds[self.current_idx, 1]
-        reward = (
-            (self.minimum_score * self.seed_count ** (self.n_states - state - 1))
-            / self.perfect_score
-            * 100
-        )
-        # Update state and environment
-        self._progress_state(self.current_idx)
-        state = self.seeds[self.current_idx, 1:2]  # Slicing for shaped array not scalar
+        if self.reward_measurement:  # Reward for measuring bad
+            reward = (
+                (self.minimum_score * self.seed_count ** (self.n_states - state - 1))
+                / self.perfect_score
+                * 100
+            )
+            # Update state and environment
+            self._progress_state(self.current_idx)
+            state = self.seeds[
+                self.current_idx, 1:2
+            ]  # Slicing for shaped array not scalar
+        else:  # Only reward for increase of state
+            previous_state = state
+            # Update state and environment
+            self._progress_state(self.current_idx)
+            state = self.seeds[
+                self.current_idx, 1:2
+            ]  # Slicing for shaped array not scalar
+            if state > previous_state:
+                reward = (
+                    (
+                        self.minimum_score
+                        * self.seed_count ** (self.n_states - previous_state - 2)
+                    )
+                    / self.perfect_score
+                    * 100
+                )
+            else:
+                reward = 0
 
         if self.timestep >= self.max_episode_timesteps():
             terminal = True
@@ -603,13 +653,20 @@ if __name__ == "__main__":
     np.set_printoptions(precision=3)
 
     environment = CartSeedMutliTier(
-        seed_count=3, n_states=3, scans_per_state=2, measurement_time=None, rng_seed=12
+        seed_count=3,
+        n_states=3,
+        scans_per_state=(1, 15),
+        measurement_time=None,
+        scoring_mode="conversion",
+        rng_seed=12,
     )
     env = Environment.create(environment=environment)
     state = env.reset()
     print(f"Start state: {state}")
     print(f"Environmental snaphot:\n {env.seeds}")
+    print(f"Scans per state: {env.scans_per_state}")
     print(f"Max timesteps {env.max_episode_timesteps()}")
+    print(f"Perfect Score: {env.perfect_score}")
     for a in [
         False,
         True,
